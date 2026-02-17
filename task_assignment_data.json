@@ -10,12 +10,76 @@
       "created_by": "John Doe"
     }
   },
-  "assignments": {},
+  "assignments": {
+    "TASK_002": [
+      "Jhon Doe1",
+      "Jhon Doe10",
+      "Jhon Doe11",
+      "Jhon Doe12",
+      "Jhon Doe13"
+    ]
+  },
   "completed_tasks": [],
   "task_counter": 3,
-  "assignment_history": [],
+  "assignment_history": [
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe1",
+      "assigned_at": "2026-02-17T10:51:07.258592",
+      "assigned_by": "John Doe",
+      "languages": [
+        "English"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe10",
+      "assigned_at": "2026-02-17T10:51:07.258632",
+      "assigned_by": "John Doe",
+      "languages": [
+        "English"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe11",
+      "assigned_at": "2026-02-17T10:51:07.258643",
+      "assigned_by": "John Doe",
+      "languages": [
+        "English"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe12",
+      "assigned_at": "2026-02-17T10:51:07.258650",
+      "assigned_by": "John Doe",
+      "languages": [
+        "English"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe13",
+      "assigned_at": "2026-02-17T10:51:07.258657",
+      "assigned_by": "John Doe",
+      "languages": [
+        "English"
+      ],
+      "priority": "P0 - Critical"
+    }
+  ],
   "last_modified": {
     "user": "John Doe",
-    "timestamp": "2026-02-17T10:51:06.474901"
+    "timestamp": "2026-02-17T10:51:07.474948"
   }
 }
