@@ -67,7 +67,26 @@
       "Jhon Doe13"
     ]
   },
-  "completed_tasks": [],
+  "completed_tasks": [
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "completed_by": "John Doe",
+      "completed_at": "2026-02-17T11:15:10.407944",
+      "assignees": [
+        "Jhon Doe1",
+        "Jhon Doe10",
+        "Jhon Doe11",
+        "Jhon Doe12"
+      ],
+      "languages": [
+        "English"
+      ],
+      "priority": "P0 - Critical",
+      "created_by": "John Doe",
+      "created_at": "2026-02-17T10:51:05.878965"
+    }
+  ],
   "task_counter": 6,
   "assignment_history": [
     {
@@ -775,6 +794,6 @@
   ],
   "last_modified": {
     "user": "John Doe",
-    "timestamp": "2026-02-17T11:11:34.655462"
+    "timestamp": "2026-02-17T11:15:10.647093"
   }
 }
