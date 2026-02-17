@@ -128,6 +128,21 @@
       "priority": "P0 - Critical",
       "created_by": "John Doe",
       "created_at": "2026-02-17T11:48:42.940225"
+    },
+    {
+      "task_id": "TASK_005",
+      "task_name": "t3t3t3",
+      "completed_by": "John Doe",
+      "completed_at": "2026-02-17T15:02:34.400396",
+      "assignees": [
+        "Jhon Doe13"
+      ],
+      "languages": [
+        "French"
+      ],
+      "priority": "P0 - Critical",
+      "created_by": "Anna Spin",
+      "created_at": "2026-02-17T11:11:12.830362"
     }
   ],
   "task_counter": 8,
@@ -886,6 +901,6 @@
   ],
   "last_modified": {
     "user": "John Doe",
-    "timestamp": "2026-02-17T15:01:52.115017"
+    "timestamp": "2026-02-17T15:02:34.795768"
   }
 }
