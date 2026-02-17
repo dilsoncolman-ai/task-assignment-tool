@@ -770,50 +770,57 @@ if st.session_state.current_user:
                 assignments = load_assignments()
                 completed = load_completed_tasks()
                 completed_ids = [c['task_id'] for c in completed]
-                active_tasks = [t for t in tasks if t not in completed_ids]
+                active_task_ids = [t for t in tasks if t not in completed_ids]
                 
                 st.divider()
                 st.subheader("📊 Live Dashboard")
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.metric("Active Tasks", len(active_tasks))
+                    st.metric("Active Tasks", len(active_task_ids))
                     st.metric("Completed Today", len([c for c in completed if datetime.fromisoformat(c['completed_at'].replace('Z', '+00:00')).date() == datetime.now().date()]))
                 with col2:
                     st.metric("Total Tasks", len(tasks))
                     st.metric("Team Size", len(st.session_state.roster_data))
                 
-                # Current assignments with counts
+                # Active Tasks List
                 st.divider()
-                st.subheader("👥 Current Assignments")
+                st.subheader("📋 Active Tasks")
                 
-                # Get current assignments
-                current_assignments = defaultdict(list)
-                task_assignee_counts = {}
-                for task_id in active_tasks:
-                    task_info = tasks[task_id]
-                    assignees = assignments.get(task_id, [])
-                    task_assignee_counts[task_info['name']] = len(assignees)
-                    for assignee in assignees:
-                        current_assignments[assignee].append(task_info['name'])
-                
-                # Show tasks with assignee counts
-                if task_assignee_counts:
-                    st.write("**Tasks by Assignee Count:**")
-                    for task_name, count in sorted(task_assignee_counts.items(), key=lambda x: x[1], reverse=True):
-                        st.write(f"• {task_name}: **{count}** assignees")
-                
-                st.divider()
-                
-                # Show individual assignments
-                if current_assignments:
-                    st.write("**Individual Assignments:**")
-                    for assignee, task_names in sorted(current_assignments.items()):
-                        with st.expander(f"{assignee} ({len(task_names)} tasks)"):
-                            for task_name in task_names:
-                                st.write(f"• {task_name}")
+                if active_task_ids:
+                    # Sort tasks by priority
+                    priority_order = {"P0 - Critical": 0, "P1 - High": 1, "P2 - Medium": 2, "P3 - Low": 3}
+                    sorted_tasks = sorted(active_task_ids, 
+                                        key=lambda tid: priority_order.get(tasks[tid]['priority'], 4))
+                    
+                    for task_id in sorted_tasks:
+                        task_info = tasks[task_id]
+                        assignees = assignments.get(task_id, [])
+                        assignee_count = len(assignees)
+                        
+                        # Priority color coding
+                        priority_colors = {
+                            "P0 - Critical": "🔴",
+                            "P1 - High": "🟠",
+                            "P2 - Medium": "🟡",
+                            "P3 - Low": "🟢"
+                        }
+                        priority_icon = priority_colors.get(task_info['priority'], "⚪")
+                        
+                        with st.expander(f"{priority_icon} {task_info['name']} ({assignee_count} assignees)"):
+                            st.write(f"**Priority:** {task_info['priority']}")
+                            st.write(f"**Languages:** {', '.join(task_info['languages'])}")
+                            st.write(f"**Created by:** {task_info['created_by']}")
+                            st.write(f"**Assignee Count:** {assignee_count}")
+                            
+                            if assignees:
+                                st.write("**Assigned to:**")
+                                for assignee in sorted(assignees):
+                                    st.write(f"  • {assignee}")
+                            else:
+                                st.write("**No assignees yet**")
                 else:
-                    st.info("No active assignments")
+                    st.info("No active tasks")
                 
                 st.divider()
                 if st.button("🔄 Refresh", use_container_width=True):
@@ -826,18 +833,10 @@ if st.session_state.current_user:
         # Reports and Data Management section
         if st.session_state.roster_data is not None:
             st.divider()
-            st.subheader("📈 Reports & Data")
+            st.subheader("📈 Reports")
             
             # Reports
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("📊 Basic Report", use_container_width=True):
-                    st.session_state.report_type = "basic"
-            with col2:
-                if st.button("📊 Detailed Report", type="primary", use_container_width=True):
-                    st.session_state.report_type = "detailed"
-            
-            if 'report_type' in st.session_state:
+            if st.button("📊 Generate Report", type="primary", use_container_width=True):
                 report = generate_detailed_report()
                 st.download_button(
                     "📥 Download Report",
@@ -847,18 +846,22 @@ if st.session_state.current_user:
                     use_container_width=True
                 )
             
-            # Data Management
+            # Data Management - More visible
             st.divider()
             st.subheader("🗄️ Data Management")
             
             # Show data reset confirmation
             if st.session_state.show_reset_confirmation:
-                st.warning("⚠️ **Are you sure you want to reset all data?**")
-                st.info("This will delete all tasks, assignments, and history. This action cannot be undone!")
+                st.error("⚠️ **WARNING: Reset All Data?**")
+                st.warning("This will permanently delete:")
+                st.write("• All tasks")
+                st.write("• All assignments")
+                st.write("• All history")
+                st.write("• All completed tasks")
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("✅ Yes, Reset", type="primary", use_container_width=True):
+                    if st.button("✅ Yes, Reset Everything", type="primary", use_container_width=True):
                         if archive_and_reset_data():
                             st.success("✅ All data has been reset!")
                             st.session_state.show_reset_confirmation = False
@@ -871,11 +874,13 @@ if st.session_state.current_user:
                         st.session_state.show_reset_confirmation = False
                         st.rerun()
             else:
-                if st.button("🗑️ Reset All Data", type="secondary", use_container_width=True):
+                # Make the reset button more prominent
+                st.warning("⚠️ **Start Fresh**")
+                st.caption("Use this to reset all data and start a new week/period")
+                if st.button("🗑️ RESET ALL DATA", type="secondary", use_container_width=True, 
+                           help="Delete all tasks and start fresh"):
                     st.session_state.show_reset_confirmation = True
                     st.rerun()
-                
-                st.caption("Use this to start a new week/period with fresh data")
     
     # Main content
     if st.session_state.roster_data is None:
@@ -1152,4 +1157,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v4.2 | GitHub Storage | Enhanced Analytics | Data Reset Feature")
+st.caption("Team Task Assignment Tool v4.3 | GitHub Storage | Task-focused Sidebar | Data Reset Feature")
