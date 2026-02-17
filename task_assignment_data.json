@@ -814,10 +814,19 @@
       "assigned_by": "Anna Spin",
       "languages": [],
       "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_007",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe16",
+      "assigned_at": "2026-02-17T14:58:39.940291",
+      "assigned_by": "Anna Spin",
+      "languages": [],
+      "priority": "Unknown"
     }
   ],
   "last_modified": {
     "user": "Anna Spin",
-    "timestamp": "2026-02-17T14:58:38.359689"
+    "timestamp": "2026-02-17T14:58:40.126367"
   }
 }
