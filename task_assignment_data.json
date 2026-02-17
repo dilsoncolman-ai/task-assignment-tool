@@ -1,7 +1,361 @@
 {
   "tasks": {},
-  "assignments": {},
+  "assignments": {
+    "TASK_001": [
+      "Jhon Doe1",
+      "Jhon Doe10",
+      "Jhon Doe11",
+      "Jhon Doe12",
+      "Jhon Doe13",
+      "Jhon Doe14",
+      "Jhon Doe15",
+      "Jhon Doe16",
+      "Jhon Doe17",
+      "Jhon Doe18",
+      "Jhon Doe19",
+      "Jhon Doe2",
+      "Jhon Doe20",
+      "Jhon Doe21",
+      "Jhon Doe22",
+      "Jhon Doe23",
+      "Jhon Doe24",
+      "Jhon Doe25",
+      "Jhon Doe26",
+      "Jhon Doe27",
+      "Jhon Doe28",
+      "Jhon Doe29",
+      "Jhon Doe3",
+      "Jhon Doe30",
+      "Jhon Doe31",
+      "Jhon Doe32",
+      "Jhon Doe33",
+      "Jhon Doe34",
+      "Jhon Doe35",
+      "Jhon Doe4",
+      "Jhon Doe5",
+      "Jhon Doe6",
+      "Jhon Doe7",
+      "Jhon Doe8",
+      "Jhon Doe9"
+    ]
+  },
   "completed_tasks": [],
-  "task_counter": 2,
-  "assignment_history": []
+  "task_counter": 1,
+  "assignment_history": [
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe1",
+      "assigned_at": "2026-02-17T08:41:31.977667",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe10",
+      "assigned_at": "2026-02-17T08:41:31.977724",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe11",
+      "assigned_at": "2026-02-17T08:41:31.977737",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe12",
+      "assigned_at": "2026-02-17T08:41:31.977746",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe13",
+      "assigned_at": "2026-02-17T08:41:31.977754",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe14",
+      "assigned_at": "2026-02-17T08:41:31.977771",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe15",
+      "assigned_at": "2026-02-17T08:41:31.977779",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe16",
+      "assigned_at": "2026-02-17T08:41:31.977787",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe17",
+      "assigned_at": "2026-02-17T08:41:31.977795",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe18",
+      "assigned_at": "2026-02-17T08:41:31.977802",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe19",
+      "assigned_at": "2026-02-17T08:41:31.977810",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe2",
+      "assigned_at": "2026-02-17T08:41:31.977818",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe20",
+      "assigned_at": "2026-02-17T08:41:31.977825",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe21",
+      "assigned_at": "2026-02-17T08:41:31.977833",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe22",
+      "assigned_at": "2026-02-17T08:41:31.977840",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe23",
+      "assigned_at": "2026-02-17T08:41:31.977848",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe24",
+      "assigned_at": "2026-02-17T08:41:31.977855",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe25",
+      "assigned_at": "2026-02-17T08:41:31.977863",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe26",
+      "assigned_at": "2026-02-17T08:41:31.977871",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe27",
+      "assigned_at": "2026-02-17T08:41:31.977879",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe28",
+      "assigned_at": "2026-02-17T08:41:31.977887",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe29",
+      "assigned_at": "2026-02-17T08:41:31.977895",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe3",
+      "assigned_at": "2026-02-17T08:41:31.977903",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe30",
+      "assigned_at": "2026-02-17T08:41:31.977911",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe31",
+      "assigned_at": "2026-02-17T08:41:31.977918",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe32",
+      "assigned_at": "2026-02-17T08:41:31.977926",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe33",
+      "assigned_at": "2026-02-17T08:41:31.977933",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe34",
+      "assigned_at": "2026-02-17T08:41:31.977941",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe35",
+      "assigned_at": "2026-02-17T08:41:31.977949",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe4",
+      "assigned_at": "2026-02-17T08:41:31.977957",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe5",
+      "assigned_at": "2026-02-17T08:41:31.977964",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe6",
+      "assigned_at": "2026-02-17T08:41:31.977972",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe7",
+      "assigned_at": "2026-02-17T08:41:31.978012",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe8",
+      "assigned_at": "2026-02-17T08:41:31.978024",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Jhon Doe9",
+      "assigned_at": "2026-02-17T08:41:31.978035",
+      "assigned_by": "John Doe",
+      "languages": [],
+      "priority": "Unknown"
+    }
+  ]
 }
