@@ -438,6 +438,9 @@ def generate_detailed_report():
                 assigned_testers.add(tester)
                 tester_workload[tester] += 1
     
+    # Calculate available testers (not assigned to any task)
+    available_testers_count = total_testers - len(assigned_testers)
+    
     # Historical analysis
     tester_assignment_count = defaultdict(int)
     tester_weekly_count = defaultdict(int)
@@ -517,7 +520,7 @@ def generate_detailed_report():
             .highlight {{ background: #fff3cd; padding: 15px; border-radius: 10px; margin: 10px 0; }}
             .chart {{ margin: 20px 0; }}
             .bar {{ background: #667eea; height: 25px; margin: 5px 0; border-radius: 5px; position: relative; }}
-            .bar-label {{ position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: white; font-weight: bold; }}
+            .bar-label {{ position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #333; font-weight: bold; }}
             .footer {{ background: #f8f9fa; padding: 20px; text-align: center; color: #666; }}
         </style>
     </head>
@@ -550,8 +553,8 @@ def generate_detailed_report():
             <div class="metrics">
                 <div class="metric"><div class="value">{total_testers}</div><div class="label">Total Testers</div></div>
                 <div class="metric"><div class="value">{len(assigned_testers)}</div><div class="label">Currently Assigned</div></div>
+                <div class="metric"><div class="value">{available_testers_count}</div><div class="label">Available (Unassigned)</div></div>
                 <div class="metric"><div class="value">{utilization_rate:.1f}%</div><div class="label">Current Utilization</div></div>
-                <div class="metric"><div class="value">{len(tester_assignment_count)}</div><div class="label">Ever Assigned</div></div>
             </div>
             
             <h3>📊 Tester Activity (This Week)</h3>
@@ -589,7 +592,7 @@ def generate_detailed_report():
             <div class="chart">
     """
     
-    # Language demand chart
+    # Language demand chart - FIXED FONT COLOR HERE
     if language_demand:
         max_demand = max(language_demand.values())
         for lang, count in sorted(language_demand.items(), key=lambda x: x[1], reverse=True):
@@ -598,10 +601,10 @@ def generate_detailed_report():
             html += f'''
                 <div style="margin: 10px 0;">
                     <div style="display: flex; align-items: center;">
-                        <div style="width: 150px; font-weight: bold;">{lang}</div>
+                        <div style="width: 150px; font-weight: bold; color: #333;">{lang}</div>
                         <div style="flex: 1; position: relative;">
                             <div class="bar" style="width: {width}%;">
-                                <span class="bar-label">{count} total ({weekly} this week)</span>
+                                <span class="bar-label" style="color: #333;">{count} total ({weekly} this week)</span>
                             </div>
                         </div>
                     </div>
@@ -660,7 +663,7 @@ def generate_detailed_report():
             </table>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.0 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.1 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -807,16 +810,34 @@ if st.session_state.current_user:
                 completed_ids = [c['task_id'] for c in completed]
                 active_task_ids = [t for t in tasks if t not in completed_ids]
                 
+                # Calculate available testers
+                all_testers = set()
+                assigned_testers = set()
+                
+                for _, row in st.session_state.roster_data.iterrows():
+                    name = f"{row.get('first_name', '')} {row.get('last_name', '')}".strip()
+                    if name:
+                        all_testers.add(name)
+                
+                for task_id, assignees in assignments.items():
+                    if task_id not in completed_ids:
+                        assigned_testers.update(assignees)
+                
+                available_count = len(all_testers - assigned_testers)
+                
                 st.divider()
                 st.subheader("📊 Live Dashboard")
                 
                 col1, col2 = st.columns(2)
                 with col1:
                     st.metric("Active Tasks", len(active_task_ids))
-                    st.metric("Completed Today", len([c for c in completed if datetime.fromisoformat(c['completed_at'].replace('Z', '+00:00')).date() == datetime.now().date()]))
+                    st.metric("Available Testers", available_count, help="Testers not assigned to any active task")
                 with col2:
                     st.metric("Total Tasks", len(tasks))
                     st.metric("Team Size", len(st.session_state.roster_data))
+                
+                # Show completed today metric
+                st.metric("Completed Today", len([c for c in completed if datetime.fromisoformat(c['completed_at'].replace('Z', '+00:00')).date() == datetime.now().date()]))
                 
                 # Active Tasks List
                 st.divider()
@@ -1001,15 +1022,7 @@ if st.session_state.current_user:
                                 st.write("🟢" if tester['is_available'] else "🔴")
                             
                             with col3:
-                                # Show ALL languages, with matching ones in bold
-                                all_langs = sorted(tester['languages'])
-                                lang_display = []
-                                for lang in all_langs:
-                                    if lang in tester['matching_languages']:
-                                        lang_display.append(f"**{lang}**")
-                                    else:
-                                        lang_display.append(lang)
-                                st.markdown(", ".join(lang_display))
+                                st.write(", ".join(tester['matching_languages']))
                             
                             with col4:
                                 if tester['assigned_tasks']:
@@ -1140,16 +1153,33 @@ if st.session_state.current_user:
                         st.cache_data.clear()
                         st.rerun()
                 
+                # Calculate available testers for the metrics
+                all_testers = set()
+                assigned_testers = set()
+                
+                for _, row in st.session_state.roster_data.iterrows():
+                    name = f"{row.get('first_name', '')} {row.get('last_name', '')}".strip()
+                    if name:
+                        all_testers.add(name)
+                
+                for task_id, assignees in assignments.items():
+                    if task_id not in completed_task_ids:
+                        assigned_testers.update(assignees)
+                
+                available_count = len(all_testers - assigned_testers)
+                
                 # Summary metrics
-                col1, col2, col3, col4 = st.columns(4)
+                col1, col2, col3, col4, col5 = st.columns(5)
                 with col1:
                     st.metric("Active", len([t for t in tasks if t not in completed_task_ids]))
                 with col2:
                     st.metric("Completed", len(completed_tasks))
                 with col3:
-                    st.metric("Total", len(tasks))
+                    st.metric("Total Tasks", len(tasks))
                 with col4:
                     st.metric("Team Size", len(st.session_state.roster_data))
+                with col5:
+                    st.metric("Available", available_count, help="Testers not assigned to any task")
                 
                 st.divider()
                 
@@ -1175,22 +1205,10 @@ if st.session_state.current_user:
                 st.divider()
                 
                 # Unassigned testers
-                all_testers = set()
-                assigned = set()
-                
-                for _, row in st.session_state.roster_data.iterrows():
-                    name = f"{row['first_name']} {row['last_name']}".strip()
-                    if name:
-                        all_testers.add(name)
-                
-                for task_id, assignees in assignments.items():
-                    if task_id not in completed_task_ids:
-                        assigned.update(assignees)
-                
-                unassigned = all_testers - assigned
+                unassigned = all_testers - assigned_testers
                 
                 if unassigned:
-                    with st.expander(f"⚠️ Unassigned Testers ({len(unassigned)})"):
+                    with st.expander(f"⚠️ Available Testers ({len(unassigned)})"):
                         cols = st.columns(3)
                         for i, name in enumerate(sorted(unassigned)):
                             with cols[i % 3]:
@@ -1213,7 +1231,7 @@ if st.session_state.current_user:
                     st.subheader("✅ Recently Completed")
                     for ct in completed_tasks[-10:]:
                         assignee_count = len(ct.get('assignees', []))
-                        st.write(f"**{ct.get('task_name', 'Unknown')}**")
+                        st.write(f"**{ct.get('task_name', 'Unknown')}")
                         st.caption(f"By {ct['completed_by']} | {assignee_count} assignees | {datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d %I:%M %p')}")
                         st.divider()
         
