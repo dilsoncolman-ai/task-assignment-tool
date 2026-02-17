@@ -95,7 +95,7 @@ def save_data_to_github(data, sha=None, file_name=DATA_FILE):
         return False
 
 # Chat Functions
-@st.cache_data(ttl=5)  # Cache for 5 seconds for chat refresh
+@st.cache_data(ttl=2)  # Cache for 2 seconds for faster chat refresh
 def load_chat_messages():
     """Load chat messages from GitHub"""
     try:
@@ -280,6 +280,8 @@ if 'chat_input' not in st.session_state:
     st.session_state.chat_input = ""
 if 'last_message_count' not in st.session_state:
     st.session_state.last_message_count = 0
+if 'chat_refresh_counter' not in st.session_state:
+    st.session_state.chat_refresh_counter = 0
 
 # Helper Functions
 def normalize_column_names(df):
@@ -685,7 +687,7 @@ def generate_detailed_report():
             </table>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v5.0 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v5.1 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -763,50 +765,53 @@ else:
     with col_chat:
         st.subheader("💬 Team Chat")
         
-        # Chat messages container
-        messages, _ = load_chat_messages()
+        # Chat messages container with placeholder for auto-refresh
+        chat_placeholder = st.empty()
         
-        # Create a container for messages with fixed height
-        chat_container = st.container()
+        # Function to display chat messages
+        def display_chat():
+            messages, _ = load_chat_messages()
+            with chat_placeholder.container():
+                if messages:
+                    for msg in messages[-20:]:  # Show last 20 messages
+                        if msg.get('user') and msg.get('message'):
+                            st.caption(f"**{msg['user']}** • {msg.get('timestamp', '')}")
+                            st.text(msg['message'])
+                            st.divider()
+                else:
+                    st.info("No messages yet. Start a conversation!")
         
-        with chat_container:
-            # Display messages
-            if messages:
-                for msg in messages[-20:]:  # Show last 20 messages
-                    if msg.get('user') and msg.get('message'):
-                        st.caption(f"**{msg['user']}** • {msg.get('timestamp', '')}")
-                        st.text(msg['message'])
-                        st.divider()
-            else:
-                st.info("No messages yet. Start a conversation!")
+        # Initial display
+        display_chat()
         
-        # Chat input with Enter key support
-        with st.form(key='chat_form', clear_on_submit=True):
-            chat_message = st.text_area("Type a message...", 
-                                      height=80, 
-                                      key="chat_input_area",
-                                      placeholder="Type and press Enter to send...")
-            
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                submit = st.form_submit_button("📤 Send", use_container_width=True)
-            with col2:
-                refresh = st.form_submit_button("🔄", use_container_width=True)
-            
-            if submit and chat_message:
-                new_message = {
-                    "user": st.session_state.current_user,
-                    "message": chat_message,
-                    "timestamp": datetime.now().strftime("%I:%M %p")
-                }
-                if save_chat_message(new_message):
-                    st.rerun()
-            
-            if refresh:
+        # Chat input - using text_input instead of form for Enter key support
+        chat_message = st.text_input("Type a message and press Enter...", 
+                                   key=f"chat_input_{st.session_state.chat_refresh_counter}",
+                                   placeholder="Press Enter to send...")
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            send_button = st.button("📤 Send", use_container_width=True)
+        with col2:
+            refresh_button = st.button("🔄", use_container_width=True)
+        
+        # Send message on Enter key or button click
+        if chat_message and (send_button or chat_message != st.session_state.chat_input):
+            new_message = {
+                "user": st.session_state.current_user,
+                "message": chat_message,
+                "timestamp": datetime.now().strftime("%I:%M %p")
+            }
+            if save_chat_message(new_message):
+                st.session_state.chat_input = ""
+                st.session_state.chat_refresh_counter += 1
                 st.rerun()
         
+        if refresh_button:
+            st.rerun()
+        
         # Auto-refresh info
-        st.caption("Chat refreshes every 5 seconds")
+        st.caption("💡 Tip: Press Enter to send • Auto-refresh every 2s")
 
 # Main interface
 if st.session_state.current_user:
@@ -1248,11 +1253,11 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v5.0 | GitHub Storage | Team Chat | Enhanced UI")
+st.caption("Team Task Assignment Tool v5.1 | GitHub Storage | Team Chat | Enhanced UI")
 
-# Auto-refresh for chat every 5 seconds
+# Auto-refresh for chat every 2 seconds
 if st.session_state.current_user:
-    time.sleep(5)
+    time.sleep(2)
     messages, _ = load_chat_messages()
     if len(messages) != st.session_state.last_message_count:
         st.session_state.last_message_count = len(messages)
