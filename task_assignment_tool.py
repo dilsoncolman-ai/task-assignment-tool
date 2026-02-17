@@ -281,6 +281,14 @@ def normalize_column_names(df):
             new_columns[col] = 'language_3'
         elif col_str in ['language_4', 'language4', 'lang4', 'lang_4']:
             new_columns[col] = 'language_4'
+        elif col_str in ['public_device_name', 'device_name', 'device']:
+            new_columns[col] = 'public_device_name'
+        elif col_str in ['device_type', 'type']:
+            new_columns[col] = 'device_type'
+        elif col_str in ['serial_number', 'serial', 'sn']:
+            new_columns[col] = 'serial_number'
+        elif col_str in ['currently_used_by', 'used_by', 'current_user']:
+            new_columns[col] = 'currently_used_by'
         else:
             new_columns[col] = col_str
     
@@ -363,6 +371,19 @@ def get_tester_languages(row):
                 languages.add(lang)
     return languages
 
+def get_tester_device_info(row):
+    """Get device information for a tester"""
+    device_info = {}
+    if 'public_device_name' in row.index and pd.notna(row['public_device_name']):
+        device_info['device_name'] = str(row['public_device_name'])
+    if 'device_type' in row.index and pd.notna(row['device_type']):
+        device_info['device_type'] = str(row['device_type'])
+    if 'serial_number' in row.index and pd.notna(row['serial_number']):
+        device_info['serial_number'] = str(row['serial_number'])
+    if 'currently_used_by' in row.index and pd.notna(row['currently_used_by']):
+        device_info['currently_used_by'] = str(row['currently_used_by'])
+    return device_info
+
 def get_available_testers(language_requirements, match_all=False):
     """Get available testers"""
     if st.session_state.roster_data is None:
@@ -385,6 +406,7 @@ def get_available_testers(language_requirements, match_all=False):
             continue
             
         tester_languages = get_tester_languages(row)
+        device_info = get_tester_device_info(row)
         
         if match_all:
             language_match = all(lang in tester_languages for lang in language_requirements)
@@ -406,7 +428,8 @@ def get_available_testers(language_requirements, match_all=False):
                 'languages': tester_languages,
                 'matching_languages': matching_languages,
                 'assigned_tasks': assigned_tasks,
-                'is_available': len(assigned_tasks) == 0
+                'is_available': len(assigned_tasks) == 0,
+                'device_info': device_info
             })
     
     available_testers.sort(key=lambda x: (-len(x['matching_languages']), not x['is_available'], x['name']))
@@ -663,7 +686,7 @@ def generate_detailed_report():
             </table>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.1 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.2 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -798,6 +821,13 @@ if st.session_state.current_user:
                            (df['last_name'].notna()) & (df['last_name'] != '')]
                     st.session_state.roster_data = df
                     st.success(f"✅ Loaded {len(df)} members")
+                    
+                    # Show device info if available
+                    device_columns = ['public_device_name', 'device_type', 'serial_number', 'currently_used_by']
+                    available_device_columns = [col for col in device_columns if col in df.columns]
+                    if available_device_columns:
+                        st.info(f"📱 Device info available: {', '.join(available_device_columns)}")
+                    
             except Exception as e:
                 st.error(f"Error: {e}")
         
@@ -1009,7 +1039,7 @@ if st.session_state.current_user:
                         
                         selected_testers = []
                         for i, tester in enumerate(available_testers):
-                            col1, col2, col3, col4 = st.columns([3, 1, 2, 3])
+                            col1, col2, col3, col4, col5 = st.columns([3, 1, 2, 3, 2])
                             
                             with col1:
                                 key = f"check_{i}"
@@ -1026,9 +1056,16 @@ if st.session_state.current_user:
                             
                             with col4:
                                 if tester['assigned_tasks']:
-                                    st.write(", ".join([f"{n} ({p})" for n, p in tester['assigned_tasks']]))
+                                    task_list = [f"{n}" for n, p in tester['assigned_tasks']]
+                                    st.write(", ".join(task_list))
                                 else:
                                     st.write("-")
+                            
+                            with col5:
+                                # Show device info if available
+                                device_info = tester.get('device_info', {})
+                                if device_info.get('device_name'):
+                                    st.caption(f"📱 {device_info.get('device_name', '')}")
                         
                         st.metric("Selected", len(selected_testers))
                         
@@ -1048,14 +1085,19 @@ if st.session_state.current_user:
                                         'created_by': st.session_state.current_user
                                     }
                                     
+                                    # Save task first
                                     save_task(task_id, task_info)
+                                    
+                                    # Save ALL selected testers (including those already assigned)
                                     save_assignments(task_id, selected_testers)
                                     
+                                    # Check for conflicts but still assign them
                                     conflicts = []
                                     for name in selected_testers:
                                         tester = next((t for t in available_testers if t['name'] == name), None)
                                         if tester and not tester['is_available']:
-                                            conflicts.append(f"{name} already assigned")
+                                            other_tasks = [task_name for task_name, _ in tester['assigned_tasks']]
+                                            conflicts.append(f"{name} is also assigned to: {', '.join(other_tasks)}")
                                     
                                     if conflicts:
                                         st.session_state.last_conflict_message = {'task_name': task_name, 'priority': priority, 'conflicts': conflicts}
@@ -1065,7 +1107,7 @@ if st.session_state.current_user:
                                         if f"check_{i}" in st.session_state:
                                             del st.session_state[f"check_{i}"]
                                     
-                                    st.success("✅ Task created!")
+                                    st.success(f"✅ Task created with {len(selected_testers)} assignees!")
                                     st.rerun()
                             else:
                                 st.error("Select at least one tester")
@@ -1204,6 +1246,36 @@ if st.session_state.current_user:
                 
                 st.divider()
                 
+                # Team Member Details
+                with st.expander("👥 Team Member Details"):
+                    df_display = st.session_state.roster_data.copy()
+                    df_display['Full Name'] = df_display['first_name'] + ' ' + df_display['last_name']
+                    
+                    # Add task count
+                    task_counts = {}
+                    for _, row in df_display.iterrows():
+                        name = f"{row['first_name']} {row['last_name']}".strip()
+                        count = 0
+                        for task_id, assignees in assignments.items():
+                            if task_id not in completed_task_ids and name in assignees:
+                                count += 1
+                        task_counts[name] = count
+                    
+                    df_display['Active Tasks'] = df_display['Full Name'].map(task_counts).fillna(0).astype(int)
+                    
+                    # Select columns to display
+                    display_columns = ['Full Name', 'Active Tasks']
+                    for col in ['language_1', 'language_2', 'language_3', 'language_4']:
+                        if col in df_display.columns:
+                            display_columns.append(col)
+                    
+                    # Add device info columns if available
+                    for col in ['public_device_name', 'device_type', 'serial_number']:
+                        if col in df_display.columns:
+                            display_columns.append(col)
+                    
+                    st.dataframe(df_display[display_columns].sort_values('Active Tasks', ascending=False))
+                
                 # Unassigned testers
                 unassigned = all_testers - assigned_testers
                 
@@ -1231,7 +1303,7 @@ if st.session_state.current_user:
                     st.subheader("✅ Recently Completed")
                     for ct in completed_tasks[-10:]:
                         assignee_count = len(ct.get('assignees', []))
-                        st.write(f"**{ct.get('task_name', 'Unknown')}")
+                        st.write(f"**{ct.get('task_name', 'Unknown')}**")
                         st.caption(f"By {ct['completed_by']} | {assignee_count} assignees | {datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d %I:%M %p')}")
                         st.divider()
         
@@ -1241,4 +1313,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v6.1 | GitHub Storage | Multi-User Support")
+st.caption("Team Task Assignment Tool v6.2 | GitHub Storage | Multi-User Support")
