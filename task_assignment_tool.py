@@ -734,6 +734,7 @@ st.markdown("""
     font-size: 14px;
 }
 </style>
+st.markdown("""
 <script>
     // Save user to localStorage
     const urlParams = new URLSearchParams(window.location.search);
@@ -750,17 +751,6 @@ st.markdown("""
             window.history.replaceState({}, '', newUrl);
         }
     }
-    
-    // Auto-scroll chat to bottom
-    function scrollChatToBottom() {
-        const chatContainer = document.querySelector('.chat-container');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-    }
-    
-    // Call on load
-    setTimeout(scrollChatToBottom, 100);
 </script>
 """, unsafe_allow_html=True)
 
@@ -803,6 +793,8 @@ else:
                 st.query_params.clear()
                 st.rerun()
     
+# Replace the chat section in the previous code with this:
+
     # Chat Panel (Right Side)
     with col_chat:
         st.subheader("💬 Team Chat")
@@ -810,26 +802,19 @@ else:
         # Chat messages container
         messages, _ = load_chat_messages()
         
-        # Auto-refresh chat every 5 seconds
-        chat_placeholder = st.empty()
+        # Create a container for messages
+        chat_container = st.container()
         
-        with chat_placeholder.container():
-            chat_html = '<div class="chat-container">'
-            
+        with chat_container:
+            # Display messages
             if messages:
                 for msg in messages[-20:]:  # Show last 20 messages
                     if msg.get('user') and msg.get('message'):
-                        chat_html += f'''
-                        <div class="chat-message">
-                            <div class="chat-user">{msg['user']} <span class="chat-time">{msg.get('timestamp', '')}</span></div>
-                            <div class="chat-text">{msg['message']}</div>
-                        </div>
-                        '''
+                        st.caption(f"**{msg['user']}** • {msg.get('timestamp', '')}")
+                        st.text(msg['message'])
+                        st.divider()
             else:
-                chat_html += '<div style="text-align: center; color: #999; padding: 20px;">No messages yet. Start a conversation!</div>'
-            
-            chat_html += '</div>'
-            st.markdown(chat_html, unsafe_allow_html=True)
+                st.info("No messages yet. Start a conversation!")
         
         # Chat input with Enter key support
         with st.form(key='chat_form', clear_on_submit=True):
@@ -861,6 +846,7 @@ else:
             st.session_state.last_message_count = len(messages)
             time.sleep(0.1)
             st.rerun()
+
 
 # Main interface
 if st.session_state.current_user:
