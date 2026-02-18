@@ -2,7 +2,7 @@
   "tasks": {
     "TASK_003": {
       "name": "t1t1t1",
-      "priority": "P0 - Critical",
+      "priority": "P1 - High",
       "languages": [
         "English",
         "French"
@@ -1818,6 +1818,6 @@
   ],
   "last_modified": {
     "user": "Alan Spin",
-    "timestamp": "2026-02-18T13:38:50.553746"
+    "timestamp": "2026-02-18T13:38:57.969429"
   }
 }
