@@ -718,39 +718,39 @@ END OF REPORT
             }}
             .language-chart {{
                 margin: 20px 0;
-                padding: 20px;
-                background: #f8f9fa;
-                border-radius: 10px;
             }}
-            .language-item {{
-                margin: 15px 0;
-                padding: 15px;
-                background: white;
+            .language-row {{
+                display: flex;
+                align-items: center;
+                margin: 10px 0;
+                padding: 10px;
+                background: #f8f9fa;
                 border-radius: 8px;
-                border-left: 4px solid #667eea;
             }}
             .language-name {{
-                font-size: 1.1em;
+                width: 200px;
                 font-weight: bold;
                 color: #333;
-                margin-bottom: 8px;
             }}
-            .language-bar {{
+            .language-bar-container {{
+                flex: 1;
                 background: #e9ecef;
-                height: 30px;
+                height: 35px;
                 border-radius: 5px;
                 position: relative;
-                overflow: hidden;
+                margin: 0 15px;
             }}
             .language-bar-fill {{
                 background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
                 height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                padding-right: 10px;
-                color: white;
+                border-radius: 5px;
+                transition: width 0.3s ease;
+            }}
+            .language-stats {{
+                min-width: 150px;
+                text-align: right;
                 font-weight: bold;
+                color: #333;
             }}
             .assignee-list {{
                 max-width: none;
@@ -847,20 +847,19 @@ END OF REPORT
             <div class="language-chart">
     """
     
-    # Improved language demand chart - NO OVERLAPPING
+    # Improved language demand chart - TEXT ALWAYS VISIBLE
     if language_demand:
         max_demand = max(language_demand.values())
         for lang, count in sorted(language_demand.items(), key=lambda x: x[1], reverse=True):
             width = (count / max_demand * 100) if max_demand > 0 else 0
             weekly = language_weekly_demand.get(lang, 0)
             html += f'''
-                <div class="language-item">
+                <div class="language-row">
                     <div class="language-name">{lang}</div>
-                    <div class="language-bar">
-                        <div class="language-bar-fill" style="width: {width}%;">
-                            {count} total ({weekly} this week)
-                        </div>
+                    <div class="language-bar-container">
+                        <div class="language-bar-fill" style="width: {width}%;"></div>
                     </div>
+                    <div class="language-stats">{count} total ({weekly} this week)</div>
                 </div>
             '''
     
@@ -926,7 +925,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.3 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.4 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1062,11 +1061,7 @@ if st.session_state.current_user:
                     st.session_state.roster_data = df
                     st.success(f"✅ Loaded {len(df)} members")
                     
-                    # Show device info if available
-                    device_columns = ['public_device_name', 'device_type', 'serial_number', 'currently_used_by']
-                    available_device_columns = [col for col in device_columns if col in df.columns]
-                    if available_device_columns:
-                        st.info(f"📱 Device info available: {', '.join(available_device_columns)}")
+                    # REMOVED: Device info notification
                     
             except Exception as e:
                 st.error(f"Error: {e}")
@@ -1553,4 +1548,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v6.3 | GitHub Storage | Multi-User Support")
+st.caption("Team Task Assignment Tool v6.4 | GitHub Storage | Multi-User Support")
