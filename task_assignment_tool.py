@@ -33,7 +33,7 @@ def get_github_headers():
 def get_data_from_github():
     """Load data from GitHub"""
     if not GITHUB_TOKEN or not GITHUB_REPO:
-        return None
+        return None, None
     
     try:
         url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}?ref={GITHUB_BRANCH}"
@@ -131,6 +131,7 @@ def load_all_data():
 
 def save_all_data(data):
     """Save all data to GitHub"""
+    # Get current SHA to prevent overwriting
     _, current_sha = get_data_from_github()
     success = save_data_to_github(data, current_sha)
     if success:
@@ -158,18 +159,25 @@ def load_tasks():
     return data.get("tasks", {})
 
 def save_task(task_id, task_info):
-    """Save a task"""
+    """Save a task - FIXED to not overwrite existing data"""
     data, _ = load_all_data()
+    
+    # Preserve existing tasks and add/update the new one
+    if "tasks" not in data:
+        data["tasks"] = {}
+    
     data["tasks"][task_id] = task_info
+    
     if save_all_data(data):
-        st.success("Task saved!")
+        return True
+    return False
 
 def delete_task(task_id):
     """Delete a task"""
     data, _ = load_all_data()
-    if task_id in data["tasks"]:
+    if task_id in data.get("tasks", {}):
         del data["tasks"][task_id]
-    if task_id in data["assignments"]:
+    if task_id in data.get("assignments", {}):
         del data["assignments"][task_id]
     save_all_data(data)
 
@@ -182,9 +190,15 @@ def save_assignments(task_id, testers):
     """Save assignments and track history"""
     data, _ = load_all_data()
     
+    # Ensure assignments dict exists
+    if "assignments" not in data:
+        data["assignments"] = {}
+    
     # Track assignment history
-    task_info = data["tasks"].get(task_id, {})
+    task_info = data.get("tasks", {}).get(task_id, {})
     for tester in testers:
+        if "assignment_history" not in data:
+            data["assignment_history"] = []
         data["assignment_history"].append({
             "task_id": task_id,
             "task_name": task_info.get("name", "Unknown"),
@@ -208,8 +222,11 @@ def mark_task_completed(task_id, completed_by):
     data, _ = load_all_data()
     
     # Get task info before marking complete
-    task_info = data["tasks"].get(task_id, {})
-    assignees = data["assignments"].get(task_id, [])
+    task_info = data.get("tasks", {}).get(task_id, {})
+    assignees = data.get("assignments", {}).get(task_id, [])
+    
+    if "completed_tasks" not in data:
+        data["completed_tasks"] = []
     
     data["completed_tasks"].append({
         'task_id': task_id,
@@ -512,6 +529,16 @@ def generate_detailed_report():
     for task_info in tasks.values():
         priority_distribution[task_info['priority']] += 1
     
+    # Get device information for testers
+    tester_devices = {}
+    if st.session_state.roster_data is not None:
+        for _, row in st.session_state.roster_data.iterrows():
+            name = f"{row.get('first_name', '')} {row.get('last_name', '')}".strip()
+            if name:
+                device_info = get_tester_device_info(row)
+                if device_info:
+                    tester_devices[name] = device_info
+    
     # Prepare text report content
     text_report = f"""
 ================================================================================
@@ -563,6 +590,25 @@ PRIORITY DISTRIBUTION
         active_priority = total_priority - completed_priority
         rate = (completed_priority / total_priority * 100) if total_priority > 0 else 0
         text_report += f"{priority}: Total={total_priority}, Active={active_priority}, Completed={completed_priority}, Rate={rate:.1f}%\n"
+    
+    # Add device information section to text report
+    text_report += """
+================================================================================
+TESTER DEVICE INFORMATION
+================================================================================
+"""
+    
+    for tester_name, device_info in sorted(tester_devices.items()):
+        if device_info:
+            text_report += f"\n{tester_name}:\n"
+            if device_info.get('device_name'):
+                text_report += f"  Device: {device_info['device_name']}\n"
+            if device_info.get('device_type'):
+                text_report += f"  Type: {device_info['device_type']}\n"
+            if device_info.get('serial_number'):
+                text_report += f"  Serial: {device_info['serial_number']}\n"
+            if device_info.get('currently_used_by'):
+                text_report += f"  Used By: {device_info['currently_used_by']}\n"
     
     text_report += """
 ================================================================================
@@ -814,7 +860,7 @@ END OF REPORT
             
             <h3>📊 Tester Activity (This Week)</h3>
             <table>
-                <tr><th>Tester</th><th>Tasks This Week</th><th>Tasks This Month</th><th>Total Tasks</th><th>Completed</th><th>Current Load</th></tr>
+                <tr><th>Tester</th><th>Tasks This Week</th><th>Tasks This Month</th><th>Total Tasks</th><th>Completed</th><th>Current Load</th><th>Device Info</th></tr>
     """
     
     # Sort testers by weekly activity
@@ -837,7 +883,14 @@ END OF REPORT
     tester_stats.sort(key=lambda x: x[1], reverse=True)  # Sort by weekly activity
     
     for tester, weekly, monthly, total, completed, current in tester_stats[:20]:  # Top 20
-        html += f'<tr><td><strong>{tester}</strong></td><td>{weekly}</td><td>{monthly}</td><td>{total}</td><td>{completed}</td><td>{current}</td></tr>'
+        device_info = tester_devices.get(tester, {})
+        device_str = ""
+        if device_info:
+            if device_info.get('device_name'):
+                device_str = device_info['device_name']
+            if device_info.get('serial_number'):
+                device_str += f" (SN: {device_info['serial_number']})"
+        html += f'<tr><td><strong>{tester}</strong></td><td>{weekly}</td><td>{monthly}</td><td>{total}</td><td>{completed}</td><td>{current}</td><td>{device_str if device_str else "-"}</td></tr>'
     
     html += """
             </table>
@@ -925,7 +978,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.4 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.5 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1274,7 +1327,8 @@ if st.session_state.current_user:
                         
                         selected_testers = []
                         for i, tester in enumerate(available_testers):
-                            col1, col2, col3, col4, col5 = st.columns([3, 1, 2, 3, 2])
+                            # REMOVED device info column - only 4 columns now
+                            col1, col2, col3, col4 = st.columns([3, 1, 2, 3])
                             
                             with col1:
                                 key = f"check_{i}"
@@ -1295,12 +1349,6 @@ if st.session_state.current_user:
                                     st.write(", ".join(task_list))
                                 else:
                                     st.write("-")
-                            
-                            with col5:
-                                # Show device info if available
-                                device_info = tester.get('device_info', {})
-                                if device_info.get('device_name'):
-                                    st.caption(f"📱 {device_info.get('device_name', '')}")
                         
                         st.metric("Selected", len(selected_testers))
                         
@@ -1321,29 +1369,30 @@ if st.session_state.current_user:
                                     }
                                     
                                     # Save task first
-                                    save_task(task_id, task_info)
-                                    
-                                    # Save ALL selected testers (including those already assigned)
-                                    save_assignments(task_id, selected_testers)
-                                    
-                                    # Check for conflicts but still assign them
-                                    conflicts = []
-                                    for name in selected_testers:
-                                        tester = next((t for t in available_testers if t['name'] == name), None)
-                                        if tester and not tester['is_available']:
-                                            other_tasks = [task_name for task_name, _ in tester['assigned_tasks']]
-                                            conflicts.append(f"{name} is also assigned to: {', '.join(other_tasks)}")
-                                    
-                                    if conflicts:
-                                        st.session_state.last_conflict_message = {'task_name': task_name, 'priority': priority, 'conflicts': conflicts}
-                                        st.session_state.show_conflict_message = True
-                                    
-                                    for i in range(len(available_testers)):
-                                        if f"check_{i}" in st.session_state:
-                                            del st.session_state[f"check_{i}"]
-                                    
-                                    st.success(f"✅ Task created with {len(selected_testers)} assignees!")
-                                    st.rerun()
+                                    if save_task(task_id, task_info):
+                                        # Save ALL selected testers (including those already assigned)
+                                        save_assignments(task_id, selected_testers)
+                                        
+                                        # Check for conflicts but still assign them
+                                        conflicts = []
+                                        for name in selected_testers:
+                                            tester = next((t for t in available_testers if t['name'] == name), None)
+                                            if tester and not tester['is_available']:
+                                                other_tasks = [task_name for task_name, _ in tester['assigned_tasks']]
+                                                conflicts.append(f"{name} is also assigned to: {', '.join(other_tasks)}")
+                                        
+                                        if conflicts:
+                                            st.session_state.last_conflict_message = {'task_name': task_name, 'priority': priority, 'conflicts': conflicts}
+                                            st.session_state.show_conflict_message = True
+                                        
+                                        for i in range(len(available_testers)):
+                                            if f"check_{i}" in st.session_state:
+                                                del st.session_state[f"check_{i}"]
+                                        
+                                        st.success(f"✅ Task created with {len(selected_testers)} assignees!")
+                                        st.rerun()
+                                    else:
+                                        st.error("Failed to save task. Please try again.")
                             else:
                                 st.error("Select at least one tester")
                     else:
@@ -1481,7 +1530,7 @@ if st.session_state.current_user:
                 
                 st.divider()
                 
-                # Team Member Details
+                # Team Member Details - REMOVED device info columns from UI
                 with st.expander("👥 Team Member Details"):
                     df_display = st.session_state.roster_data.copy()
                     df_display['Full Name'] = df_display['first_name'] + ' ' + df_display['last_name']
@@ -1498,14 +1547,9 @@ if st.session_state.current_user:
                     
                     df_display['Active Tasks'] = df_display['Full Name'].map(task_counts).fillna(0).astype(int)
                     
-                    # Select columns to display
+                    # Select columns to display - NO DEVICE INFO HERE
                     display_columns = ['Full Name', 'Active Tasks']
                     for col in ['language_1', 'language_2', 'language_3', 'language_4']:
-                        if col in df_display.columns:
-                            display_columns.append(col)
-                    
-                    # Add device info columns if available
-                    for col in ['public_device_name', 'device_type', 'serial_number']:
                         if col in df_display.columns:
                             display_columns.append(col)
                     
@@ -1548,4 +1592,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v6.4 | GitHub Storage | Multi-User Support")
+st.caption("Team Task Assignment Tool v6.5 | GitHub Storage | Multi-User Support")
