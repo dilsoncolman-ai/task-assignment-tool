@@ -80,52 +80,7 @@
       "Jhon Doe15"
     ]
   },
-  "completed_tasks": [
-    {
-      "task_id": "TASK_003",
-      "task_name": "t1t1t1",
-      "completed_by": "Alan Spin",
-      "completed_at": "2026-02-18T13:41:27.419620",
-      "assignees": [
-        "Jhon Doe13",
-        "Jhon Doe15",
-        "Jhon Doe18",
-        "Jhon Doe25",
-        "Jhon Doe9",
-        "Jhon Doe1",
-        "Jhon Doe14",
-        "Jhon Doe16",
-        "Jhon Doe17",
-        "Jhon Doe19",
-        "Jhon Doe2",
-        "Jhon Doe20",
-        "Jhon Doe21",
-        "Jhon Doe22",
-        "Jhon Doe23",
-        "Jhon Doe24",
-        "Jhon Doe26",
-        "Jhon Doe28",
-        "Jhon Doe29",
-        "Jhon Doe3",
-        "Jhon Doe30",
-        "Jhon Doe31",
-        "Jhon Doe32",
-        "Jhon Doe34",
-        "Jhon Doe35",
-        "Jhon Doe4",
-        "Jhon Doe5",
-        "Jhon Doe6",
-        "Jhon Doe8"
-      ],
-      "languages": [
-        "English",
-        "French"
-      ],
-      "priority": "P1 - High",
-      "created_by": "John Doe",
-      "created_at": "2026-02-18T13:36:27.662787"
-    }
-  ],
+  "completed_tasks": [],
   "task_counter": 6,
   "assignment_history": [
     {
@@ -2278,10 +2233,358 @@
         "Turkish"
       ],
       "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe13",
+      "assigned_at": "2026-02-18T13:41:33.278870",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe15",
+      "assigned_at": "2026-02-18T13:41:33.278904",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe18",
+      "assigned_at": "2026-02-18T13:41:33.278916",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe25",
+      "assigned_at": "2026-02-18T13:41:33.278925",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe9",
+      "assigned_at": "2026-02-18T13:41:33.278934",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe1",
+      "assigned_at": "2026-02-18T13:41:33.278943",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe14",
+      "assigned_at": "2026-02-18T13:41:33.278952",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe16",
+      "assigned_at": "2026-02-18T13:41:33.278960",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe17",
+      "assigned_at": "2026-02-18T13:41:33.278969",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe19",
+      "assigned_at": "2026-02-18T13:41:33.278977",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe2",
+      "assigned_at": "2026-02-18T13:41:33.279020",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe20",
+      "assigned_at": "2026-02-18T13:41:33.279029",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe21",
+      "assigned_at": "2026-02-18T13:41:33.279038",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe22",
+      "assigned_at": "2026-02-18T13:41:33.279046",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe23",
+      "assigned_at": "2026-02-18T13:41:33.279055",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe24",
+      "assigned_at": "2026-02-18T13:41:33.279064",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe26",
+      "assigned_at": "2026-02-18T13:41:33.279117",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe28",
+      "assigned_at": "2026-02-18T13:41:33.279127",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe29",
+      "assigned_at": "2026-02-18T13:41:33.279137",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe3",
+      "assigned_at": "2026-02-18T13:41:33.279154",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe30",
+      "assigned_at": "2026-02-18T13:41:33.279163",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe31",
+      "assigned_at": "2026-02-18T13:41:33.279171",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe32",
+      "assigned_at": "2026-02-18T13:41:33.279180",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe34",
+      "assigned_at": "2026-02-18T13:41:33.279189",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe35",
+      "assigned_at": "2026-02-18T13:41:33.279197",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe4",
+      "assigned_at": "2026-02-18T13:41:33.279205",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe5",
+      "assigned_at": "2026-02-18T13:41:33.279214",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe6",
+      "assigned_at": "2026-02-18T13:41:33.279222",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_003",
+      "task_name": "t1t1t1",
+      "tester": "Jhon Doe8",
+      "assigned_at": "2026-02-18T13:41:33.279231",
+      "assigned_by": "Alan Spin",
+      "languages": [
+        "English",
+        "French"
+      ],
+      "priority": "P1 - High"
     }
   ],
   "last_modified": {
     "user": "Alan Spin",
-    "timestamp": "2026-02-18T13:41:27.909028"
+    "timestamp": "2026-02-18T13:41:33.764842"
   }
 }
