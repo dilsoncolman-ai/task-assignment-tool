@@ -452,6 +452,30 @@ def get_available_testers(language_requirements, match_all=False):
     available_testers.sort(key=lambda x: (-len(x['matching_languages']), not x['is_available'], x['name']))
     return available_testers
 
+def get_all_testers_with_languages():
+    """Get all testers with their language information"""
+    if st.session_state.roster_data is None:
+        return []
+    
+    testers = []
+    df = st.session_state.roster_data.fillna('')
+    
+    for _, row in df.iterrows():
+        if not row.get('first_name') or not row.get('last_name'):
+            continue
+            
+        full_name = f"{row['first_name']} {row['last_name']}".strip()
+        if not full_name or full_name == ' ':
+            continue
+            
+        tester_languages = get_tester_languages(row)
+        testers.append({
+            'name': full_name,
+            'languages': tester_languages
+        })
+    
+    return testers
+
 def generate_detailed_report():
     """Generate comprehensive analytics report"""
     tasks = load_tasks()
@@ -539,6 +563,9 @@ def generate_detailed_report():
                 if device_info:
                     tester_devices[name] = device_info
     
+    # Date range for the report
+    date_range_str = f"{week_ago.strftime('%B %d, %Y')} - {now.strftime('%B %d, %Y')}"
+    
     # Prepare text report content
     text_report = f"""
 ================================================================================
@@ -569,7 +596,7 @@ Available (Unassigned): {available_testers_count}
 Current Utilization: {utilization_rate:.1f}%
 
 ================================================================================
-LANGUAGE DEMAND ANALYSIS
+LANGUAGE DEMAND ANALYSIS (Week: {date_range_str})
 ================================================================================
 """
     
@@ -823,6 +850,11 @@ END OF REPORT
                 font-size: 0.9em;
                 line-height: 1.5;
             }}
+            .date-range {{
+                color: #764ba2;
+                font-style: italic;
+                margin-top: 5px;
+            }}
         </style>
     </head>
     <body>
@@ -892,11 +924,12 @@ END OF REPORT
                 device_str += f" (SN: {device_info['serial_number']})"
         html += f'<tr><td><strong>{tester}</strong></td><td>{weekly}</td><td>{monthly}</td><td>{total}</td><td>{completed}</td><td>{current}</td><td>{device_str if device_str else "-"}</td></tr>'
     
-    html += """
+    html += f"""
             </table>
             
             <h2>🌐 Language Demand Analysis</h2>
             <h3>Language Requirements (All Time)</h3>
+            <p class="date-range">Week Period: {date_range_str}</p>
             <div class="language-chart">
     """
     
@@ -978,7 +1011,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.5 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.6 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1398,7 +1431,7 @@ if st.session_state.current_user:
                     else:
                         st.warning("No testers match criteria")
             
-            # Tab 2: Manage
+            # Tab 2: Manage - ENHANCED WITH LANGUAGE FILTERING
             with tab2:
                 st.header("Manage Assignments")
                 
@@ -1445,13 +1478,56 @@ if st.session_state.current_user:
                             
                             st.divider()
                             
-                            available = get_available_testers(task_info['languages'], False)
-                            new_assignees = st.multiselect(
-                                f"Assignees (currently {assignee_count})",
-                                [t['name'] for t in available],
-                                default=current_assignees,
+                            # ENHANCED: Get all testers with language info
+                            all_testers_info = get_all_testers_with_languages()
+                            
+                            # Language filter for assignees
+                            st.write("**Manage Assignees:**")
+                            
+                            # Get all unique languages from testers
+                            all_tester_languages = set()
+                            for tester_info in all_testers_info:
+                                all_tester_languages.update(tester_info['languages'])
+                            
+                            # Filter by language
+                            col1, col2 = st.columns([2, 3])
+                            with col1:
+                                filter_language = st.selectbox(
+                                    "Filter by language",
+                                    ["All"] + sorted(list(all_tester_languages)),
+                                    key=f"filter_lang_{task_id}"
+                                )
+                            
+                            # Filter testers based on selected language
+                            if filter_language == "All":
+                                filtered_testers = all_testers_info
+                            else:
+                                filtered_testers = [t for t in all_testers_info if filter_language in t['languages']]
+                            
+                            # Create display names with languages
+                            tester_display_names = {}
+                            for tester in filtered_testers:
+                                langs_str = ", ".join(sorted(tester['languages']))
+                                display_name = f"{tester['name']} [{langs_str}]"
+                                tester_display_names[display_name] = tester['name']
+                            
+                            # Multiselect with language info
+                            current_display_names = []
+                            for assignee in current_assignees:
+                                tester_info = next((t for t in all_testers_info if t['name'] == assignee), None)
+                                if tester_info:
+                                    langs_str = ", ".join(sorted(tester_info['languages']))
+                                    current_display_names.append(f"{assignee} [{langs_str}]")
+                            
+                            new_assignees_display = st.multiselect(
+                                f"Assignees (showing: {filter_language})",
+                                sorted(list(tester_display_names.keys())),
+                                default=[d for d in current_display_names if d in tester_display_names.keys()],
                                 key=f"assign_{task_id}"
                             )
+                            
+                            # Convert display names back to actual names
+                            new_assignees = [tester_display_names[display] for display in new_assignees_display]
                             
                             if len(new_assignees) != assignee_count:
                                 st.info(f"Change: {assignee_count} → {len(new_assignees)} assignees")
@@ -1468,7 +1544,7 @@ if st.session_state.current_user:
                 else:
                     st.info("No active tasks")
             
-            # Tab 3: Status
+            # Tab 3: Status - ENHANCED WITH DATE RANGE
             with tab3:
                 st.header("Task Status Overview")
                 
@@ -1509,12 +1585,16 @@ if st.session_state.current_user:
                 
                 st.divider()
                 
-                # Analytics section
+                # Analytics section with date range
                 st.subheader("📊 Quick Analytics")
+                
+                # Calculate date range
+                now = datetime.now()
+                week_ago = now - timedelta(days=7)
+                date_range_str = f"{week_ago.strftime('%B %d, %Y')} - {now.strftime('%B %d, %Y')}"
                 
                 # Language demand this week
                 assignment_history = load_assignment_history()
-                week_ago = datetime.now() - timedelta(days=7)
                 language_weekly_demand = defaultdict(int)
                 
                 for record in assignment_history:
@@ -1524,7 +1604,8 @@ if st.session_state.current_user:
                             language_weekly_demand[lang] += 1
                 
                 if language_weekly_demand:
-                    st.write("**Most Demanded Languages This Week:**")
+                    st.write(f"**Most Demanded Languages This Week**")
+                    st.caption(f"📅 Period: {date_range_str}")
                     for lang, count in sorted(language_weekly_demand.items(), key=lambda x: x[1], reverse=True)[:5]:
                         st.write(f"• {lang}: {count} tasks")
                 
@@ -1592,4 +1673,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v6.5 | GitHub Storage | Multi-User Support")
+st.caption("Team Task Assignment Tool v6.6 | GitHub Storage | Multi-User Support")
