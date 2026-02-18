@@ -8,6 +8,7 @@ import statistics
 import requests
 from typing import Dict, List, Any
 import os
+import time
 
 # Page config
 st.set_page_config(
@@ -64,10 +65,14 @@ def get_data_from_github():
         st.error(f"Error loading data from GitHub: {e}")
         return None, None
 
-def save_data_to_github(data, sha=None, file_name=DATA_FILE):
-    """Save data to GitHub"""
+def save_data_to_github(data, sha=None, file_name=DATA_FILE, retry_count=0):
+    """Save data to GitHub with automatic retry on conflicts"""
     if not GITHUB_TOKEN or not GITHUB_REPO:
         st.error("GitHub configuration missing in secrets")
+        return False
+    
+    if retry_count > 3:
+        st.error("Failed to save after multiple attempts. Please refresh and try again.")
         return False
     
     try:
@@ -95,15 +100,46 @@ def save_data_to_github(data, sha=None, file_name=DATA_FILE):
         
         if response.status_code in [200, 201]:
             return True
+        elif response.status_code == 409:
+            # Conflict - someone else updated the file
+            if retry_count == 0:
+                st.warning("⚠️ Another user updated the data. Attempting to merge changes...")
+            
+            # Get the latest data
+            latest_data, latest_sha = get_data_from_github()
+            if latest_data:
+                # Merge the changes (simple strategy - combine tasks and assignments)
+                if "tasks" in data and "tasks" in latest_data:
+                    latest_data["tasks"].update(data["tasks"])
+                if "assignments" in data and "assignments" in latest_data:
+                    latest_data["assignments"].update(data["assignments"])
+                if "completed_tasks" in data:
+                    # Merge completed tasks, avoiding duplicates
+                    existing_ids = {ct['task_id'] for ct in latest_data.get("completed_tasks", [])}
+                    for ct in data.get("completed_tasks", []):
+                        if ct['task_id'] not in existing_ids:
+                            latest_data["completed_tasks"].append(ct)
+                if "assignment_history" in data:
+                    # Merge assignment history
+                    latest_data["assignment_history"].extend(data.get("assignment_history", []))
+                if "task_counter" in data:
+                    latest_data["task_counter"] = max(data.get("task_counter", 1), latest_data.get("task_counter", 1))
+                
+                # Retry with merged data
+                time.sleep(0.5)  # Small delay to avoid rapid retries
+                return save_data_to_github(latest_data, latest_sha, file_name, retry_count + 1)
+            else:
+                st.error("Failed to resolve conflict. Please refresh the page.")
+                return False
         else:
-            st.error(f"GitHub save error: {response.status_code} - {response.text}")
+            st.error(f"GitHub save error: {response.status_code}")
             return False
     except Exception as e:
         st.error(f"Error saving to GitHub: {e}")
         return False
 
 # Data Management Functions
-@st.cache_data(ttl=10)  # Short cache to reduce API calls but stay fresh
+@st.cache_data(ttl=5)  # Reduced cache time to minimize conflicts
 def load_all_data():
     """Load all data from GitHub"""
     data, sha = get_data_from_github()
@@ -130,13 +166,24 @@ def load_all_data():
     }, None
 
 def save_all_data(data):
-    """Save all data to GitHub"""
-    # Get current SHA to prevent overwriting
+    """Save all data to GitHub with conflict resolution"""
+    # Always get fresh SHA before saving
     _, current_sha = get_data_from_github()
     success = save_data_to_github(data, current_sha)
     if success:
         st.cache_data.clear()  # Clear cache to force reload
-    return success
+        return True
+    else:
+        # Show more helpful error message
+        st.error("""
+        ⚠️ **Save Conflict Detected**
+        
+        Another team lead has made changes. Please:
+        1. Click the 🔄 Refresh button
+        2. Review any changes
+        3. Try your action again
+        """)
+        return False
 
 def reset_all_data():
     """Reset all data to start fresh"""
@@ -159,17 +206,24 @@ def load_tasks():
     return data.get("tasks", {})
 
 def save_task(task_id, task_info):
-    """Save a task - FIXED to not overwrite existing data"""
-    data, _ = load_all_data()
+    """Save a task with conflict handling"""
+    max_retries = 3
+    for attempt in range(max_retries):
+        data, _ = load_all_data()
+        
+        # Preserve existing tasks and add/update the new one
+        if "tasks" not in data:
+            data["tasks"] = {}
+        
+        data["tasks"][task_id] = task_info
+        
+        if save_all_data(data):
+            return True
+        
+        if attempt < max_retries - 1:
+            st.warning(f"Retrying save... (Attempt {attempt + 2}/{max_retries})")
+            time.sleep(1)
     
-    # Preserve existing tasks and add/update the new one
-    if "tasks" not in data:
-        data["tasks"] = {}
-    
-    data["tasks"][task_id] = task_info
-    
-    if save_all_data(data):
-        return True
     return False
 
 def delete_task(task_id):
@@ -187,30 +241,41 @@ def load_assignments():
     return data.get("assignments", {})
 
 def save_assignments(task_id, testers):
-    """Save assignments and track history"""
-    data, _ = load_all_data()
-    
-    # Ensure assignments dict exists
-    if "assignments" not in data:
-        data["assignments"] = {}
-    
-    # Track assignment history
-    task_info = data.get("tasks", {}).get(task_id, {})
-    for tester in testers:
+    """Save assignments and track history with conflict handling"""
+    max_retries = 3
+    for attempt in range(max_retries):
+        data, _ = load_all_data()
+        
+        # Ensure assignments dict exists
+        if "assignments" not in data:
+            data["assignments"] = {}
+        
+        # Track assignment history
+        task_info = data.get("tasks", {}).get(task_id, {})
         if "assignment_history" not in data:
             data["assignment_history"] = []
-        data["assignment_history"].append({
-            "task_id": task_id,
-            "task_name": task_info.get("name", "Unknown"),
-            "tester": tester,
-            "assigned_at": datetime.now().isoformat(),
-            "assigned_by": st.session_state.current_user,
-            "languages": task_info.get("languages", []),
-            "priority": task_info.get("priority", "Unknown")
-        })
+            
+        for tester in testers:
+            data["assignment_history"].append({
+                "task_id": task_id,
+                "task_name": task_info.get("name", "Unknown"),
+                "tester": tester,
+                "assigned_at": datetime.now().isoformat(),
+                "assigned_by": st.session_state.current_user,
+                "languages": task_info.get("languages", []),
+                "priority": task_info.get("priority", "Unknown")
+            })
+        
+        data["assignments"][task_id] = testers
+        
+        if save_all_data(data):
+            return True
+        
+        if attempt < max_retries - 1:
+            st.warning(f"Retrying save... (Attempt {attempt + 2}/{max_retries})")
+            time.sleep(1)
     
-    data["assignments"][task_id] = testers
-    save_all_data(data)
+    return False
 
 def load_completed_tasks():
     """Load completed tasks"""
@@ -517,16 +582,23 @@ def generate_detailed_report():
     for record in assignment_history:
         tester_assignment_count[record['tester']] += 1
         
-        assigned_date = datetime.fromisoformat(record['assigned_at'].replace('Z', '+00:00'))
-        if assigned_date >= week_ago:
-            tester_weekly_count[record['tester']] += 1
-        if assigned_date >= month_ago:
-            tester_monthly_count[record['tester']] += 1
+        try:
+            assigned_date = datetime.fromisoformat(record['assigned_at'].replace('Z', '+00:00'))
+            if assigned_date >= week_ago:
+                tester_weekly_count[record['tester']] += 1
+            if assigned_date >= month_ago:
+                tester_monthly_count[record['tester']] += 1
+        except:
+            pass
         
         for lang in record.get('languages', []):
             language_demand[lang] += 1
-            if assigned_date >= week_ago:
-                language_weekly_demand[lang] += 1
+            try:
+                assigned_date = datetime.fromisoformat(record['assigned_at'].replace('Z', '+00:00'))
+                if assigned_date >= week_ago:
+                    language_weekly_demand[lang] += 1
+            except:
+                pass
     
     # Analyze completed tasks
     completion_times = []
@@ -646,7 +718,10 @@ ACTIVE TASKS DETAILS
     for task_id, task_info in active_tasks:
         assignees = assignments.get(task_id, [])
         assignee_count = len(assignees)
-        created_date = datetime.fromisoformat(task_info['created_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y') if 'created_at' in task_info else 'N/A'
+        try:
+            created_date = datetime.fromisoformat(task_info['created_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y') if 'created_at' in task_info else 'N/A'
+        except:
+            created_date = 'N/A'
         text_report += f"\nTask: {task_info['name']}\n"
         text_report += f"  Priority: {task_info['priority']}\n"
         text_report += f"  Languages: {', '.join(task_info['languages'])}\n"
@@ -660,7 +735,10 @@ RECENTLY COMPLETED TASKS
 """
     
     for ct in completed_tasks[-10:]:
-        completion_date = datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y %I:%M %p')
+        try:
+            completion_date = datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y %I:%M %p')
+        except:
+            completion_date = 'N/A'
         assignees = ct.get('assignees', [])
         assignee_count = len(assignees)
         text_report += f"\nTask: {ct.get('task_name', 'Unknown')}\n"
@@ -977,7 +1055,10 @@ END OF REPORT
     for task_id, task_info in active_tasks:
         assignees = assignments.get(task_id, [])
         assignee_count = len(assignees)
-        created_date = datetime.fromisoformat(task_info['created_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y') if 'created_at' in task_info else 'N/A'
+        try:
+            created_date = datetime.fromisoformat(task_info['created_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y') if 'created_at' in task_info else 'N/A'
+        except:
+            created_date = 'N/A'
         tag_class = {'P0 - Critical': 'tag-critical', 'P1 - High': 'tag-high', 'P2 - Medium': 'tag-medium', 'P3 - Low': 'tag-low'}.get(task_info['priority'], '')
         # Show ALL assignees
         assignee_display = ', '.join(assignees) if assignees else 'None'
@@ -993,7 +1074,10 @@ END OF REPORT
     
     # Show last 10 completed tasks with ALL assignees
     for ct in completed_tasks[-10:]:
-        completion_date = datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y %I:%M %p')
+        try:
+            completion_date = datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d/%Y %I:%M %p')
+        except:
+            completion_date = 'N/A'
         tag_class = {'P0 - Critical': 'tag-critical', 'P1 - High': 'tag-high', 'P2 - Medium': 'tag-medium', 'P3 - Low': 'tag-low'}.get(ct.get('priority', ''), '')
         assignees = ct.get('assignees', [])
         assignee_count = len(assignees)
@@ -1011,7 +1095,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.6 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.7 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1049,6 +1133,13 @@ st.markdown("""
 # Main UI
 st.title("📋 Team Task Assignment Tool")
 
+# Add refresh button at the top
+col1, col2 = st.columns([10, 1])
+with col2:
+    if st.button("🔄", help="Refresh to see latest changes"):
+        st.cache_data.clear()
+        st.rerun()
+
 # Check GitHub configuration
 if not GITHUB_TOKEN or not GITHUB_REPO:
     st.error("⚠️ GitHub configuration missing!")
@@ -1073,12 +1164,10 @@ if st.session_state.current_user is None:
         st.rerun()
 else:
     # Multi-user warning banner
-    st.warning("""
-    ⚠️ **Multiple Users Warning**: This tool supports multiple team leads working simultaneously. 
-    To avoid conflicts:
-    - **Refresh frequently** using the 🔄 button to see latest changes
-    - **Save your work promptly** to prevent overwriting others' changes
-    - **Check "Last Modified"** info before making changes
+    st.info("""
+    💡 **Multi-User Support Active**: This tool supports multiple team leads working simultaneously. 
+    The system will automatically handle conflicts and merge changes when possible.
+    Use the 🔄 button to refresh and see the latest updates from other users.
     """)
     
     # Show last modified info
@@ -1147,8 +1236,6 @@ if st.session_state.current_user:
                     st.session_state.roster_data = df
                     st.success(f"✅ Loaded {len(df)} members")
                     
-                    # REMOVED: Device info notification
-                    
             except Exception as e:
                 st.error(f"Error: {e}")
         
@@ -1188,7 +1275,14 @@ if st.session_state.current_user:
                     st.metric("Team Size", len(st.session_state.roster_data))
                 
                 # Show completed today metric
-                st.metric("Completed Today", len([c for c in completed if datetime.fromisoformat(c['completed_at'].replace('Z', '+00:00')).date() == datetime.now().date()]))
+                today_completed = 0
+                for c in completed:
+                    try:
+                        if datetime.fromisoformat(c['completed_at'].replace('Z', '+00:00')).date() == datetime.now().date():
+                            today_completed += 1
+                    except:
+                        pass
+                st.metric("Completed Today", today_completed)
                 
                 # Active Tasks List
                 st.divider()
@@ -1360,7 +1454,6 @@ if st.session_state.current_user:
                         
                         selected_testers = []
                         for i, tester in enumerate(available_testers):
-                            # REMOVED device info column - only 4 columns now
                             col1, col2, col3, col4 = st.columns([3, 1, 2, 3])
                             
                             with col1:
@@ -1598,10 +1691,13 @@ if st.session_state.current_user:
                 language_weekly_demand = defaultdict(int)
                 
                 for record in assignment_history:
-                    assigned_date = datetime.fromisoformat(record['assigned_at'].replace('Z', '+00:00'))
-                    if assigned_date >= week_ago:
-                        for lang in record.get('languages', []):
-                            language_weekly_demand[lang] += 1
+                    try:
+                        assigned_date = datetime.fromisoformat(record['assigned_at'].replace('Z', '+00:00'))
+                        if assigned_date >= week_ago:
+                            for lang in record.get('languages', []):
+                                language_weekly_demand[lang] += 1
+                    except:
+                        pass
                 
                 if language_weekly_demand:
                     st.write(f"**Most Demanded Languages This Week**")
@@ -1611,7 +1707,7 @@ if st.session_state.current_user:
                 
                 st.divider()
                 
-                # Team Member Details - REMOVED device info columns from UI
+                # Team Member Details
                 with st.expander("👥 Team Member Details"):
                     df_display = st.session_state.roster_data.copy()
                     df_display['Full Name'] = df_display['first_name'] + ' ' + df_display['last_name']
@@ -1628,7 +1724,7 @@ if st.session_state.current_user:
                     
                     df_display['Active Tasks'] = df_display['Full Name'].map(task_counts).fillna(0).astype(int)
                     
-                    # Select columns to display - NO DEVICE INFO HERE
+                    # Select columns to display
                     display_columns = ['Full Name', 'Active Tasks']
                     for col in ['language_1', 'language_2', 'language_3', 'language_4']:
                         if col in df_display.columns:
@@ -1664,7 +1760,11 @@ if st.session_state.current_user:
                     for ct in completed_tasks[-10:]:
                         assignee_count = len(ct.get('assignees', []))
                         st.write(f"**{ct.get('task_name', 'Unknown')}**")
-                        st.caption(f"By {ct['completed_by']} | {assignee_count} assignees | {datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d %I:%M %p')}")
+                        try:
+                            completion_time = datetime.fromisoformat(ct['completed_at'].replace('Z', '+00:00')).strftime('%m/%d %I:%M %p')
+                        except:
+                            completion_time = 'N/A'
+                        st.caption(f"By {ct['completed_by']} | {assignee_count} assignees | {completion_time}")
                         st.divider()
         
         except Exception as e:
@@ -1673,4 +1773,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v6.6 | GitHub Storage | Multi-User Support")
+st.caption("Team Task Assignment Tool v6.7 | GitHub Storage | Multi-User Support")
