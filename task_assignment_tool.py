@@ -340,36 +340,62 @@ if 'show_reset_confirmation' not in st.session_state:
 
 # Helper Functions
 def normalize_column_names(df):
-    """Normalize column names"""
+    """Normalize column names - IMPROVED VERSION"""
+    # First, check if the DataFrame is empty
+    if df.empty:
+        return df
+    
+    # Remove completely empty rows
+    df = df.dropna(how='all')
+    
+    # If first row looks like headers (all string values), use it as column names
+    if df.shape[0] > 0:
+        first_row = df.iloc[0]
+        if all(isinstance(val, str) or pd.isna(val) for val in first_row):
+            # Check if current columns are just numbers (0, 1, 2...)
+            if all(isinstance(col, (int, float)) for col in df.columns):
+                # Use first row as headers
+                new_columns = []
+                for val in first_row:
+                    if pd.isna(val):
+                        new_columns.append(f"Column_{len(new_columns)}")
+                    else:
+                        new_columns.append(str(val).strip())
+                df.columns = new_columns
+                df = df.iloc[1:].reset_index(drop=True)
+    
+    # Remove unnamed columns at the beginning
     first_col = df.columns[0]
     if 'unnamed' in str(first_col).lower() or first_col == 0 or pd.isna(first_col):
         df = df.iloc[:, 1:]
     
+    # Normalize column names
     new_columns = {}
     for col in df.columns:
         if pd.isna(col):
             continue
         col_str = str(col).strip().lower().replace(' ', '_')
         
-        if col_str in ['first_name', 'firstname', 'first', 'fname', 'given_name']:
+        # More flexible column matching
+        if any(x in col_str for x in ['first_name', 'firstname', 'first', 'fname', 'given_name', 'given']):
             new_columns[col] = 'first_name'
-        elif col_str in ['last_name', 'lastname', 'last', 'lname', 'surname', 'family_name']:
+        elif any(x in col_str for x in ['last_name', 'lastname', 'last', 'lname', 'surname', 'family_name', 'family']):
             new_columns[col] = 'last_name'
-        elif col_str in ['language_1', 'language1', 'lang1', 'lang_1']:
+        elif any(x in col_str for x in ['language_1', 'language1', 'lang1', 'lang_1', 'language 1']):
             new_columns[col] = 'language_1'
-        elif col_str in ['language_2', 'language2', 'lang2', 'lang_2']:
+        elif any(x in col_str for x in ['language_2', 'language2', 'lang2', 'lang_2', 'language 2']):
             new_columns[col] = 'language_2'
-        elif col_str in ['language_3', 'language3', 'lang3', 'lang_3']:
+        elif any(x in col_str for x in ['language_3', 'language3', 'lang3', 'lang_3', 'language 3']):
             new_columns[col] = 'language_3'
-        elif col_str in ['language_4', 'language4', 'lang4', 'lang_4']:
+        elif any(x in col_str for x in ['language_4', 'language4', 'lang4', 'lang_4', 'language 4']):
             new_columns[col] = 'language_4'
-        elif col_str in ['public_device_name', 'device_name', 'device']:
+        elif any(x in col_str for x in ['public_device_name', 'device_name', 'device', 'device name']):
             new_columns[col] = 'public_device_name'
-        elif col_str in ['device_type', 'type']:
+        elif any(x in col_str for x in ['device_type', 'type', 'device type']):
             new_columns[col] = 'device_type'
-        elif col_str in ['serial_number', 'serial', 'sn']:
+        elif any(x in col_str for x in ['serial_number', 'serial', 'sn', 'serial number']):
             new_columns[col] = 'serial_number'
-        elif col_str in ['currently_used_by', 'used_by', 'current_user']:
+        elif any(x in col_str for x in ['currently_used_by', 'used_by', 'current_user', 'used by']):
             new_columns[col] = 'currently_used_by'
         else:
             new_columns[col] = col_str
@@ -541,6 +567,36 @@ def get_all_testers_with_languages():
     
     return testers
 
+# NEW FUNCTION: Get testers assigned to multiple tasks
+def get_multi_assigned_testers():
+    """Get list of testers assigned to multiple active tasks"""
+    tasks = load_tasks()
+    assignments = load_assignments()
+    completed_tasks = load_completed_tasks()
+    completed_task_ids = [ct['task_id'] for ct in completed_tasks]
+    
+    # Count assignments per tester
+    tester_assignments = defaultdict(list)
+    
+    for task_id, assignees in assignments.items():
+        if task_id not in completed_task_ids:  # Only count active tasks
+            task_info = tasks.get(task_id, {})
+            for tester in assignees:
+                tester_assignments[tester].append({
+                    'task_id': task_id,
+                    'task_name': task_info.get('name', 'Unknown'),
+                    'priority': task_info.get('priority', 'Unknown'),
+                    'languages': task_info.get('languages', [])
+                })
+    
+    # Filter to only those with multiple assignments
+    multi_assigned = {}
+    for tester, tasks_list in tester_assignments.items():
+        if len(tasks_list) > 1:
+            multi_assigned[tester] = tasks_list
+    
+    return multi_assigned
+
 def generate_detailed_report():
     """Generate comprehensive analytics report"""
     tasks = load_tasks()
@@ -638,6 +694,9 @@ def generate_detailed_report():
     # Date range for the report
     date_range_str = f"{week_ago.strftime('%B %d, %Y')} - {now.strftime('%B %d, %Y')}"
     
+    # Get multi-assigned testers
+    multi_assigned = get_multi_assigned_testers()
+    
     # Prepare text report content
     text_report = f"""
 ================================================================================
@@ -667,6 +726,20 @@ Currently Assigned: {len(assigned_testers)}
 Available (Unassigned): {available_testers_count}
 Current Utilization: {utilization_rate:.1f}%
 
+================================================================================
+TESTERS WITH MULTIPLE ASSIGNMENTS
+================================================================================
+Total testers with multiple active tasks: {len(multi_assigned)}
+
+"""
+    
+    if multi_assigned:
+        for tester, tasks_list in sorted(multi_assigned.items()):
+            text_report += f"\n{tester} - Assigned to {len(tasks_list)} tasks:\n"
+            for task in tasks_list:
+                text_report += f"  • {task['task_name']} ({task['priority']}) - Languages: {', '.join(task['languages'])}\n"
+    
+    text_report += """
 ================================================================================
 LANGUAGE DEMAND ANALYSIS (Week: {date_range_str})
 ================================================================================
@@ -867,6 +940,19 @@ END OF REPORT
                 border-radius: 10px; 
                 margin: 10px 0; 
             }}
+            .multi-assigned {{
+                background: #ffeaa7;
+                padding: 20px;
+                border-radius: 10px;
+                margin: 20px 0;
+            }}
+            .multi-assigned-item {{
+                background: white;
+                padding: 15px;
+                margin: 10px 0;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }}
             .language-chart {{
                 margin: 20px 0;
             }}
@@ -967,7 +1053,33 @@ END OF REPORT
                 <div class="metric"><div class="value">{available_testers_count}</div><div class="label">Available (Unassigned)</div></div>
                 <div class="metric"><div class="value">{utilization_rate:.1f}%</div><div class="label">Current Utilization</div></div>
             </div>
-            
+    """
+    
+    # Add multi-assigned testers section
+    if multi_assigned:
+        html += f"""
+            <div class="multi-assigned">
+                <h2>⚠️ Testers with Multiple Assignments</h2>
+                <p>Total testers assigned to multiple active tasks: <strong>{len(multi_assigned)}</strong></p>
+        """
+        
+        for tester, tasks_list in sorted(multi_assigned.items()):
+            html += f"""
+                <div class="multi-assigned-item">
+                    <h4>{tester} - Assigned to {len(tasks_list)} tasks:</h4>
+                    <ul>
+            """
+            for task in tasks_list:
+                tag_class = {'P0 - Critical': 'tag-critical', 'P1 - High': 'tag-high', 'P2 - Medium': 'tag-medium', 'P3 - Low': 'tag-low'}.get(task['priority'], '')
+                html += f"""<li><strong>{task['task_name']}</strong> <span class="tag {tag_class}">{task['priority']}</span> - Languages: {', '.join(task['languages'])}</li>"""
+            html += """
+                    </ul>
+                </div>
+            """
+        
+        html += "</div>"
+    
+    html += f"""
             <h3>📊 Tester Activity (This Week)</h3>
             <table>
                 <tr><th>Tester</th><th>Tasks This Week</th><th>Tasks This Month</th><th>Total Tasks</th><th>Completed</th><th>Current Load</th><th>Device Info</th></tr>
@@ -1095,7 +1207,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.7 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.8 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1221,15 +1333,32 @@ if st.session_state.current_user:
         if uploaded_file:
             try:
                 if uploaded_file.name.endswith('.csv'):
-                    df = pd.read_csv(uploaded_file)
+                    # Read CSV with different encoding options
+                    try:
+                        df = pd.read_csv(uploaded_file, encoding='utf-8')
+                    except:
+                        uploaded_file.seek(0)  # Reset file pointer
+                        try:
+                            df = pd.read_csv(uploaded_file, encoding='latin-1')
+                        except:
+                            uploaded_file.seek(0)  # Reset file pointer
+                            df = pd.read_csv(uploaded_file, encoding='cp1252')
                 else:
                     df = pd.read_excel(uploaded_file, engine='openpyxl')
                 
+                # Debug: Show raw column names
+                st.caption(f"Raw columns detected: {list(df.columns)}")
+                
                 df = normalize_column_names(df)
+                
+                # Debug: Show normalized column names
+                st.caption(f"Normalized columns: {list(df.columns)}")
+                
                 missing = validate_required_columns(df)
                 
                 if missing:
                     st.error(f"Missing: {', '.join(missing)}")
+                    st.info("Make sure your CSV has 'First Name' and 'Last Name' columns (or similar)")
                 else:
                     df = df[(df['first_name'].notna()) & (df['first_name'] != '') &
                            (df['last_name'].notna()) & (df['last_name'] != '')]
@@ -1238,6 +1367,7 @@ if st.session_state.current_user:
                     
             except Exception as e:
                 st.error(f"Error: {e}")
+                st.info("Try exporting as CSV from Numbers/Excel")
         
         # Live task summary
         if st.session_state.roster_data is not None:
@@ -1283,6 +1413,11 @@ if st.session_state.current_user:
                     except:
                         pass
                 st.metric("Completed Today", today_completed)
+                
+                # NEW: Show multi-assigned testers count
+                multi_assigned = get_multi_assigned_testers()
+                if multi_assigned:
+                    st.warning(f"⚠️ {len(multi_assigned)} testers have multiple tasks")
                 
                 # Active Tasks List
                 st.divider()
@@ -1395,7 +1530,8 @@ if st.session_state.current_user:
             completed_tasks = load_completed_tasks()
             completed_task_ids = [ct['task_id'] for ct in completed_tasks]
             
-            tab1, tab2, tab3 = st.tabs(["📝 Create Task", "👥 Manage", "✅ Status"])
+            # NEW: Add a fourth tab for multi-assigned testers
+            tab1, tab2, tab3, tab4 = st.tabs(["📝 Create Task", "👥 Manage", "✅ Status", "⚠️ Multi-Assigned"])
             
             # Tab 1: Create Task
             with tab1:
@@ -1766,6 +1902,65 @@ if st.session_state.current_user:
                             completion_time = 'N/A'
                         st.caption(f"By {ct['completed_by']} | {assignee_count} assignees | {completion_time}")
                         st.divider()
+            
+            # NEW Tab 4: Multi-Assigned Testers
+            with tab4:
+                st.header("⚠️ Testers with Multiple Assignments")
+                
+                # Refresh reminder
+                col1, col2 = st.columns([4, 1])
+                with col2:
+                    if st.button("🔄 Refresh", key="refresh_multi", help="Refresh to see latest changes"):
+                        st.cache_data.clear()
+                        st.rerun()
+                
+                multi_assigned = get_multi_assigned_testers()
+                
+                if multi_assigned:
+                    st.warning(f"**{len(multi_assigned)} testers** are assigned to multiple active tasks")
+                    st.info("Review these assignments and decide where each tester should be located")
+                    
+                    # Sort by number of assignments (descending)
+                    sorted_multi = sorted(multi_assigned.items(), key=lambda x: len(x[1]), reverse=True)
+                    
+                    for tester, tasks_list in sorted_multi:
+                        with st.expander(f"👤 {tester} - Assigned to {len(tasks_list)} tasks"):
+                            st.write(f"**Current Assignments:**")
+                            
+                            for i, task in enumerate(tasks_list):
+                                priority_colors = {
+                                    "P0 - Critical": "🔴",
+                                    "P1 - High": "🟠",
+                                    "P2 - Medium": "🟡",
+                                    "P3 - Low": "🟢"
+                                }
+                                priority_icon = priority_colors.get(task['priority'], "⚪")
+                                
+                                st.write(f"{i+1}. {priority_icon} **{task['task_name']}**")
+                                st.caption(f"   Priority: {task['priority']} | Languages: {', '.join(task['languages'])}")
+                            
+                            st.divider()
+                            
+                            # Quick action buttons
+                            st.write("**Quick Actions:**")
+                            st.caption("Remove this tester from selected tasks:")
+                            
+                            cols = st.columns(min(len(tasks_list), 3))
+                            for i, task in enumerate(tasks_list):
+                                with cols[i % 3]:
+                                    if st.button(f"Remove from {task['task_name'][:20]}...", 
+                                               key=f"remove_{tester}_{task['task_id']}",
+                                               use_container_width=True):
+                                        # Remove tester from this task
+                                        current_assignees = assignments.get(task['task_id'], [])
+                                        if tester in current_assignees:
+                                            current_assignees.remove(tester)
+                                            save_assignments(task['task_id'], current_assignees)
+                                            st.success(f"Removed {tester} from {task['task_name']}")
+                                            st.rerun()
+                else:
+                    st.success("✅ No testers are assigned to multiple tasks!")
+                    st.info("All testers are assigned to at most one active task.")
         
         except Exception as e:
             st.error(f"Data error: {e}")
@@ -1773,4 +1968,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v6.7 | GitHub Storage | Multi-User Support")
+st.caption("Team Task Assignment Tool v6.8 | GitHub Storage | Multi-User Support")
