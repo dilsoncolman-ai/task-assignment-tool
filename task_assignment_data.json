@@ -42,8 +42,7 @@
       "Sophie Stark-Foun\u00e9"
     ],
     "TASK_002": [
-      "Albaraa Zahran",
-      "Angela Brauer"
+      "Albaraa Zahran"
     ],
     "TASK_003": [
       "Frederik Fagerlund",
@@ -461,10 +460,22 @@
       "assigned_by": "Dilson2",
       "languages": [],
       "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t2t2t2",
+      "tester": "Albaraa Zahran",
+      "assigned_at": "2026-02-19T16:21:01.952548",
+      "assigned_by": "Dilson2",
+      "languages": [
+        "Chinese",
+        "Arabic"
+      ],
+      "priority": "P0 - Critical"
     }
   ],
   "last_modified": {
     "user": "Dilson2",
-    "timestamp": "2026-02-19T16:20:39.100959"
+    "timestamp": "2026-02-19T16:21:02.202352"
   }
 }
