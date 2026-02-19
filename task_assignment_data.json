@@ -10,12 +10,96 @@
       "created_by": "Dilson1"
     }
   },
-  "assignments": {},
+  "assignments": {
+    "TASK_001": [
+      "Antoine Le Naour",
+      "Beatrice Baldin",
+      "Esther Weber",
+      "Giorgio Caiazzo",
+      "Joanna Ku\u015bnierek",
+      "Louis Guisset",
+      "Nicolas Lamiable",
+      "Sophie Stark-Foun\u00e9"
+    ]
+  },
   "completed_tasks": [],
   "task_counter": 2,
-  "assignment_history": [],
+  "assignment_history": [
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Antoine Le Naour",
+      "assigned_at": "2026-02-19T16:17:52.970928",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Beatrice Baldin",
+      "assigned_at": "2026-02-19T16:17:52.970971",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Esther Weber",
+      "assigned_at": "2026-02-19T16:17:52.970987",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Giorgio Caiazzo",
+      "assigned_at": "2026-02-19T16:17:52.970997",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Joanna Ku\u015bnierek",
+      "assigned_at": "2026-02-19T16:17:52.971008",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Louis Guisset",
+      "assigned_at": "2026-02-19T16:17:52.971017",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Nicolas Lamiable",
+      "assigned_at": "2026-02-19T16:17:52.971028",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "Unknown",
+      "tester": "Sophie Stark-Foun\u00e9",
+      "assigned_at": "2026-02-19T16:17:52.971038",
+      "assigned_by": "Dilson1",
+      "languages": [],
+      "priority": "Unknown"
+    }
+  ],
   "last_modified": {
     "user": "Dilson1",
-    "timestamp": "2026-02-19T16:17:52.226069"
+    "timestamp": "2026-02-19T16:17:54.205730"
   }
 }
