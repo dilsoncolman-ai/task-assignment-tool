@@ -30,6 +30,10 @@
       "Louis Guisset",
       "Nicolas Lamiable",
       "Sophie Stark-Foun\u00e9"
+    ],
+    "TASK_002": [
+      "Albaraa Zahran",
+      "Angela Brauer"
     ]
   },
   "completed_tasks": [],
@@ -106,10 +110,34 @@
       "assigned_by": "Dilson1",
       "languages": [],
       "priority": "Unknown"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t2t2t2",
+      "tester": "Albaraa Zahran",
+      "assigned_at": "2026-02-19T16:18:22.578456",
+      "assigned_by": "Dilson",
+      "languages": [
+        "Chinese",
+        "Arabic"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t2t2t2",
+      "tester": "Angela Brauer",
+      "assigned_at": "2026-02-19T16:18:22.578506",
+      "assigned_by": "Dilson",
+      "languages": [
+        "Chinese",
+        "Arabic"
+      ],
+      "priority": "P0 - Critical"
     }
   ],
   "last_modified": {
     "user": "Dilson",
-    "timestamp": "2026-02-19T16:18:21.826157"
+    "timestamp": "2026-02-19T16:18:22.763803"
   }
 }
