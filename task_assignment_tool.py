@@ -9,6 +9,7 @@ import requests
 from typing import Dict, List, Any
 import os
 import time
+import io
 
 # Page config
 st.set_page_config(
@@ -339,75 +340,163 @@ if 'show_reset_confirmation' not in st.session_state:
     st.session_state.show_reset_confirmation = False
 
 # Helper Functions
+def parse_csv_intelligently(file_content):
+    """Intelligently parse CSV that might have various formats"""
+    try:
+        # Try reading with different delimiters
+        for delimiter in [',', '\t', ';', '|']:
+            try:
+                file_content.seek(0)
+                df = pd.read_csv(file_content, delimiter=delimiter)
+                
+                # Check if we got meaningful columns
+                if len(df.columns) > 1:
+                    return df
+            except:
+                continue
+        
+        # If all delimiters failed, try reading as single column and split
+        file_content.seek(0)
+        df = pd.read_csv(file_content)
+        
+        # If we have a single column with comma-separated values
+        if len(df.columns) == 1 and df.shape[0] > 0:
+            first_col = df.columns[0]
+            
+            # Check if the column name itself contains the headers
+            if ',' in str(first_col):
+                # Split the column name to get headers
+                headers = [h.strip() for h in str(first_col).split(',')]
+                
+                # Create new dataframe with proper columns
+                new_data = []
+                for idx, row in df.iterrows():
+                    if pd.notna(row.iloc[0]) and ',' in str(row.iloc[0]):
+                        values = [v.strip() for v in str(row.iloc[0]).split(',')]
+                        # Pad with empty strings if needed
+                        while len(values) < len(headers):
+                            values.append('')
+                        new_data.append(values[:len(headers)])
+                
+                if new_data:
+                    df = pd.DataFrame(new_data, columns=headers)
+                    return df
+            
+            # Check if first row contains comma-separated values
+            first_row_val = str(df.iloc[0, 0]) if df.shape[0] > 0 else ""
+            if ',' in first_row_val:
+                # This might be a CSV where everything is in one column
+                # Re-read treating the first row as data
+                file_content.seek(0)
+                lines = file_content.read().decode('utf-8').strip().split('\n')
+                
+                # Parse manually
+                data = []
+                headers = None
+                
+                for line in lines:
+                    if line.strip():
+                        # Split by comma, but respect quoted values
+                        values = []
+                        current_value = ""
+                        in_quotes = False
+                        
+                        for char in line:
+                            if char == '"':
+                                in_quotes = not in_quotes
+                            elif char == ',' and not in_quotes:
+                                values.append(current_value.strip().strip('"'))
+                                current_value = ""
+                            else:
+                                current_value += char
+                        
+                        if current_value:
+                            values.append(current_value.strip().strip('"'))
+                        
+                        if headers is None:
+                            headers = values
+                        else:
+                            data.append(values)
+                
+                if headers and data:
+                    # Ensure all rows have same number of columns
+                    max_cols = len(headers)
+                    for row in data:
+                        while len(row) < max_cols:
+                            row.append('')
+                    
+                    df = pd.DataFrame(data, columns=headers)
+                    return df
+        
+        return df
+        
+    except Exception as e:
+        raise Exception(f"Failed to parse CSV: {str(e)}")
+
 def normalize_column_names(df):
-    """Normalize column names - IMPROVED VERSION"""
-    # First, check if the DataFrame is empty
+    """Normalize column names with better handling"""
     if df.empty:
         return df
     
-    # Remove completely empty rows
-    df = df.dropna(how='all')
+    # Create a mapping of variations to standard names
+    column_mappings = {
+        'first_name': ['first_name', 'firstname', 'first name', 'fname', 'given_name', 'given name', 'first', 'name'],
+        'last_name': ['last_name', 'lastname', 'last name', 'lname', 'surname', 'family_name', 'family name', 'last'],
+        'language_1': ['language_1', 'language1', 'language 1', 'lang1', 'lang_1', 'lang 1', 'primary_language', 'primary language'],
+        'language_2': ['language_2', 'language2', 'language 2', 'lang2', 'lang_2', 'lang 2', 'secondary_language', 'secondary language'],
+        'language_3': ['language_3', 'language3', 'language 3', 'lang3', 'lang_3', 'lang 3'],
+        'language_4': ['language_4', 'language4', 'language 4', 'lang4', 'lang_4', 'lang 4'],
+        'public_device_name': ['public_device_name', 'device_name', 'device name', 'device', 'public device name'],
+        'device_type': ['device_type', 'type', 'device type'],
+        'serial_number': ['serial_number', 'serial', 'sn', 'serial number', 'serial no', 'serial_no'],
+        'currently_used_by': ['currently_used_by', 'used_by', 'current_user', 'used by', 'currently used by', 'current user']
+    }
     
-    # If first row looks like headers (all string values), use it as column names
-    if df.shape[0] > 0:
-        first_row = df.iloc[0]
-        if all(isinstance(val, str) or pd.isna(val) for val in first_row):
-            # Check if current columns are just numbers (0, 1, 2...)
-            if all(isinstance(col, (int, float)) for col in df.columns):
-                # Use first row as headers
-                new_columns = []
-                for val in first_row:
-                    if pd.isna(val):
-                        new_columns.append(f"Column_{len(new_columns)}")
-                    else:
-                        new_columns.append(str(val).strip())
-                df.columns = new_columns
-                df = df.iloc[1:].reset_index(drop=True)
-    
-    # Remove unnamed columns at the beginning
-    first_col = df.columns[0]
-    if 'unnamed' in str(first_col).lower() or first_col == 0 or pd.isna(first_col):
-        df = df.iloc[:, 1:]
-    
-    # Normalize column names
+    # Normalize existing column names
     new_columns = {}
+    
     for col in df.columns:
-        if pd.isna(col):
+        if pd.isna(col) or str(col).strip() == '':
             continue
-        col_str = str(col).strip().lower().replace(' ', '_')
+            
+        # Convert to lowercase and strip whitespace for comparison
+        col_lower = str(col).strip().lower()
         
-        # More flexible column matching
-        if any(x in col_str for x in ['first_name', 'firstname', 'first', 'fname', 'given_name', 'given']):
-            new_columns[col] = 'first_name'
-        elif any(x in col_str for x in ['last_name', 'lastname', 'last', 'lname', 'surname', 'family_name', 'family']):
-            new_columns[col] = 'last_name'
-        elif any(x in col_str for x in ['language_1', 'language1', 'lang1', 'lang_1', 'language 1']):
-            new_columns[col] = 'language_1'
-        elif any(x in col_str for x in ['language_2', 'language2', 'lang2', 'lang_2', 'language 2']):
-            new_columns[col] = 'language_2'
-        elif any(x in col_str for x in ['language_3', 'language3', 'lang3', 'lang_3', 'language 3']):
-            new_columns[col] = 'language_3'
-        elif any(x in col_str for x in ['language_4', 'language4', 'lang4', 'lang_4', 'language 4']):
-            new_columns[col] = 'language_4'
-        elif any(x in col_str for x in ['public_device_name', 'device_name', 'device', 'device name']):
-            new_columns[col] = 'public_device_name'
-        elif any(x in col_str for x in ['device_type', 'type', 'device type']):
-            new_columns[col] = 'device_type'
-        elif any(x in col_str for x in ['serial_number', 'serial', 'sn', 'serial number']):
-            new_columns[col] = 'serial_number'
-        elif any(x in col_str for x in ['currently_used_by', 'used_by', 'current_user', 'used by']):
-            new_columns[col] = 'currently_used_by'
-        else:
-            new_columns[col] = col_str
+        # Check against our mappings
+        mapped = False
+        for standard_name, variations in column_mappings.items():
+            if col_lower in variations:
+                new_columns[col] = standard_name
+                mapped = True
+                break
+        
+        # If no mapping found, just clean up the column name
+        if not mapped:
+            # Replace spaces with underscores and remove special characters
+            clean_name = col_lower.replace(' ', '_').replace('-', '_')
+            clean_name = ''.join(c for c in clean_name if c.isalnum() or c == '_')
+            new_columns[col] = clean_name
     
     df = df.rename(columns=new_columns)
+    
+    # Remove completely empty columns
     df = df.dropna(axis=1, how='all')
+    
+    # Remove duplicate columns (keep first)
+    df = df.loc[:, ~df.columns.duplicated()]
+    
     return df
 
 def validate_required_columns(df):
     """Check required columns"""
     required = ['first_name', 'last_name']
-    return [col for col in required if col not in df.columns]
+    missing = []
+    
+    for col in required:
+        if col not in df.columns:
+            missing.append(col)
+    
+    return missing
 
 def normalize_language(lang):
     """Normalize language codes"""
@@ -1207,7 +1296,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v6.8 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v6.9 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1333,41 +1422,61 @@ if st.session_state.current_user:
         if uploaded_file:
             try:
                 if uploaded_file.name.endswith('.csv'):
-                    # Read CSV with different encoding options
-                    try:
-                        df = pd.read_csv(uploaded_file, encoding='utf-8')
-                    except:
-                        uploaded_file.seek(0)  # Reset file pointer
-                        try:
-                            df = pd.read_csv(uploaded_file, encoding='latin-1')
-                        except:
-                            uploaded_file.seek(0)  # Reset file pointer
-                            df = pd.read_csv(uploaded_file, encoding='cp1252')
+                    # Use our intelligent CSV parser
+                    df = parse_csv_intelligently(uploaded_file)
                 else:
                     df = pd.read_excel(uploaded_file, engine='openpyxl')
                 
-                # Debug: Show raw column names
-                st.caption(f"Raw columns detected: {list(df.columns)}")
+                # Debug: Show raw columns before normalization
+                with st.expander("Debug: Column Detection", expanded=False):
+                    st.write("**Raw columns detected:**")
+                    st.write(list(df.columns))
+                    st.write("**First few rows:**")
+                    st.dataframe(df.head())
                 
                 df = normalize_column_names(df)
                 
-                # Debug: Show normalized column names
-                st.caption(f"Normalized columns: {list(df.columns)}")
+                # Debug: Show normalized columns
+                with st.expander("Debug: After Normalization", expanded=False):
+                    st.write("**Normalized columns:**")
+                    st.write(list(df.columns))
+                    st.write("**Column mapping applied**")
                 
                 missing = validate_required_columns(df)
                 
                 if missing:
-                    st.error(f"Missing: {', '.join(missing)}")
-                    st.info("Make sure your CSV has 'First Name' and 'Last Name' columns (or similar)")
+                    st.error(f"Missing required columns: {', '.join(missing)}")
+                    st.warning("""
+                    **Required columns:**
+                    - First Name (or similar: firstname, first, fname, given name)
+                    - Last Name (or similar: lastname, last, lname, surname, family name)
+                    
+                    **Optional columns:**
+                    - Language 1, Language 2, Language 3, Language 4
+                    - Device Name, Device Type, Serial Number, etc.
+                    """)
                 else:
+                    # Filter out empty rows
                     df = df[(df['first_name'].notna()) & (df['first_name'] != '') &
                            (df['last_name'].notna()) & (df['last_name'] != '')]
                     st.session_state.roster_data = df
-                    st.success(f"✅ Loaded {len(df)} members")
+                    st.success(f"✅ Loaded {len(df)} team members")
+                    
+                    # Show validation issues if any
+                    issues = validate_roster_data(df)
+                    if issues:
+                        for issue in issues:
+                            st.warning(issue)
                     
             except Exception as e:
-                st.error(f"Error: {e}")
-                st.info("Try exporting as CSV from Numbers/Excel")
+                st.error(f"Error loading file: {str(e)}")
+                st.info("""
+                **Tips for CSV files:**
+                - Make sure the first row contains column headers
+                - Use comma (,) as delimiter
+                - Include at least First Name and Last Name columns
+                - Export from Numbers/Excel as "CSV UTF-8" if possible
+                """)
         
         # Live task summary
         if st.session_state.roster_data is not None:
@@ -1968,4 +2077,4 @@ if st.session_state.current_user:
 
 # Footer
 st.divider()
-st.caption("Team Task Assignment Tool v6.8 | GitHub Storage | Multi-User Support")
+st.caption("Team Task Assignment Tool v6.9 | GitHub Storage | Multi-User Support")
