@@ -12,12 +12,100 @@
       "created_by": "John Doe"
     }
   },
-  "assignments": {},
+  "assignments": {
+    "TASK_001": [
+      "Angela Brauer",
+      "Beatrice Baldin",
+      "Berry Pieroen",
+      "Giorgio Caiazzo",
+      "Louis Guisset",
+      "Marco Manis"
+    ]
+  },
   "completed_tasks": [],
   "task_counter": 2,
-  "assignment_history": [],
+  "assignment_history": [
+    {
+      "task_id": "TASK_001",
+      "task_name": "t1t1t1",
+      "tester": "Angela Brauer",
+      "assigned_at": "2026-02-19T09:00:55.474016",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Chinese",
+        "Dutch",
+        "Italian"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "t1t1t1",
+      "tester": "Beatrice Baldin",
+      "assigned_at": "2026-02-19T09:00:55.474054",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Chinese",
+        "Dutch",
+        "Italian"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "t1t1t1",
+      "tester": "Berry Pieroen",
+      "assigned_at": "2026-02-19T09:00:55.474065",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Chinese",
+        "Dutch",
+        "Italian"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "t1t1t1",
+      "tester": "Giorgio Caiazzo",
+      "assigned_at": "2026-02-19T09:00:55.474071",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Chinese",
+        "Dutch",
+        "Italian"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "t1t1t1",
+      "tester": "Louis Guisset",
+      "assigned_at": "2026-02-19T09:00:55.474076",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Chinese",
+        "Dutch",
+        "Italian"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_001",
+      "task_name": "t1t1t1",
+      "tester": "Marco Manis",
+      "assigned_at": "2026-02-19T09:00:55.474083",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Chinese",
+        "Dutch",
+        "Italian"
+      ],
+      "priority": "P0 - Critical"
+    }
+  ],
   "last_modified": {
     "user": "John Doe",
-    "timestamp": "2026-02-19T09:00:54.822548"
+    "timestamp": "2026-02-19T09:00:55.683619"
   }
 }
