@@ -665,12 +665,16 @@ def validate_required_columns(df):
     return missing
 
 def normalize_language(lang):
-    """Normalize language codes"""
+    """Normalize language codes - UPDATED TO EXCLUDE NA"""
     if pd.isna(lang) or lang == '' or str(lang).lower() == 'nan':
         return None
     
     lang = str(lang).strip()
     lang_upper = lang.upper()
+    
+    # Skip NA (Not Applicable)
+    if lang_upper == 'NA' or lang_upper == 'N/A':
+        return None
     
     language_map = {
         'EN': 'English', 'EN_US': 'English', 'EN_GB': 'English', 'EN_IE': 'English',
@@ -771,7 +775,7 @@ def get_tester_device_info(row):
     return device_info
 
 def get_available_testers(language_requirements, match_all=False):
-    """Get available testers"""
+    """Get available testers - UPDATED TO SHOW ALL LANGUAGES"""
     if st.session_state.roster_data is None:
         return []
     
@@ -811,8 +815,8 @@ def get_available_testers(language_requirements, match_all=False):
             
             available_testers.append({
                 'name': full_name,
-                'languages': tester_languages,
-                'matching_languages': matching_languages,
+                'languages': tester_languages,  # All languages
+                'matching_languages': matching_languages,  # Only matching ones
                 'assigned_tasks': assigned_tasks,
                 'is_available': len(assigned_tasks) == 0,
                 'device_info': device_info
@@ -876,7 +880,7 @@ def get_multi_assigned_testers():
     return multi_assigned
 
 def generate_detailed_report():
-    """Generate comprehensive analytics report"""
+    """Generate comprehensive analytics report - UPDATED WITH TAKEAWAYS"""
     tasks = load_tasks()
     assignments = load_assignments()
     completed_tasks = load_completed_tasks()
@@ -975,6 +979,43 @@ def generate_detailed_report():
     # Get multi-assigned testers
     multi_assigned = get_multi_assigned_testers()
     
+    # Generate takeaways
+    takeaways = []
+    
+    # Utilization takeaway
+    if utilization_rate > 80:
+        takeaways.append("🔴 **High Utilization Alert**: Over 80% of testers are currently assigned. Consider redistributing tasks or bringing in additional resources.")
+    elif utilization_rate < 50:
+        takeaways.append("🟢 **Resource Availability**: Less than 50% of testers are assigned. There's capacity for additional tasks.")
+    else:
+        takeaways.append("🟡 **Balanced Utilization**: Team utilization is at a healthy level between 50-80%.")
+    
+    # Multi-assignment takeaway
+    if len(multi_assigned) > 0:
+        takeaways.append(f"⚠️ **Assignment Conflicts**: {len(multi_assigned)} testers are assigned to multiple tasks. Review the Multi-Assigned tab to resolve conflicts.")
+    
+    # Completion rate takeaway
+    if completion_rate > 75:
+        takeaways.append("✅ **Strong Completion Rate**: Over 75% of tasks have been completed. Team is performing well.")
+    elif completion_rate < 25:
+        takeaways.append("📊 **Early Stage**: Less than 25% completion rate indicates most tasks are still in progress.")
+    
+    # Language demand takeaway
+    if language_demand:
+        top_lang = max(language_demand.items(), key=lambda x: x[1])[0]
+        takeaways.append(f"🌐 **Language Focus**: {top_lang} is the most demanded language. Ensure adequate {top_lang} speakers are available.")
+    
+    # Priority balance takeaway
+    critical_active = len([t for t in active_tasks if t[1]['priority'] == 'P0 - Critical'])
+    if critical_active > 0:
+        takeaways.append(f"🚨 **Critical Tasks**: {critical_active} P0-Critical tasks are active and should be prioritized.")
+    
+    # Available resources takeaway
+    if available_testers_count == 0:
+        takeaways.append("⚡ **All Hands on Deck**: All testers are currently assigned. No spare capacity available.")
+    elif available_testers_count > total_testers * 0.3:
+        takeaways.append(f"💡 **Underutilized Resources**: {available_testers_count} testers are available. Consider assigning them to pending tasks.")
+    
     # Prepare text report content
     text_report = f"""
 ================================================================================
@@ -997,6 +1038,14 @@ Key Insights:
 - Most demanded language: {max(language_demand.items(), key=lambda x: x[1])[0] if language_demand else 'N/A'} ({max(language_demand.values()) if language_demand else 0} tasks)
 
 ================================================================================
+KEY TAKEAWAYS & RECOMMENDATIONS
+================================================================================
+"""
+    for takeaway in takeaways:
+        text_report += f"• {takeaway}\n"
+    
+    text_report += f"""
+================================================================================
 RESOURCE UTILIZATION
 ================================================================================
 Total Testers: {total_testers}
@@ -1017,7 +1066,7 @@ Total testers with multiple active tasks: {len(multi_assigned)}
             for task in tasks_list:
                 text_report += f"  • {task['task_name']} ({task['priority']}) - Languages: {', '.join(task['languages'])}\n"
     
-    text_report += """
+    text_report += f"""
 ================================================================================
 LANGUAGE DEMAND ANALYSIS (Week: {date_range_str})
 ================================================================================
@@ -1180,6 +1229,25 @@ END OF REPORT
                 color: #666; 
                 margin-top: 5px; 
             }}
+            .takeaways {{
+                background: #e3f2fd;
+                padding: 25px;
+                border-radius: 15px;
+                margin: 20px 0;
+                border-left: 5px solid #2196f3;
+            }}
+            .takeaways h3 {{
+                color: #1976d2;
+                margin-top: 0;
+            }}
+            .takeaways ul {{
+                margin: 10px 0;
+                padding-left: 20px;
+            }}
+            .takeaways li {{
+                margin: 10px 0;
+                line-height: 1.6;
+            }}
             table {{ 
                 width: 100%; 
                 border-collapse: collapse; 
@@ -1333,6 +1401,18 @@ END OF REPORT
                 </ul>
             </div>
             
+            <div class="takeaways">
+                <h3>🎯 Key Takeaways & Recommendations</h3>
+                <ul>
+    """
+    
+    for takeaway in takeaways:
+        html += f"<li>{takeaway}</li>\n"
+    
+    html += f"""
+                </ul>
+            </div>
+            
             <h2>👥 Resource Utilization</h2>
             <div class="metrics">
                 <div class="metric"><div class="value">{total_testers}</div><div class="label">Total Testers</div></div>
@@ -1404,7 +1484,8 @@ END OF REPORT
                 device_key = f'device_{i}'
                 if device_key in device_info and device_info[device_key].get('device_name'):
                     device_str += f", {device_info[device_key]['device_name']}"
-        html += f'<tr><td><strong>{tester}</strong></td><td>{weekly}</td><td>{monthly}</td><td>{total}</td><td>{completed}</td><td>{current}</td><td>{device_str if device_str else "-"}</td></tr>'
+        # Don't show "-" if no device info
+        html += f'<tr><td><strong>{tester}</strong></td><td>{weekly}</td><td>{monthly}</td><td>{total}</td><td>{completed}</td><td>{current}</td><td>{device_str}</td></tr>'
     
     html += f"""
             </table>
@@ -1499,7 +1580,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v7.1 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v7.2 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1858,7 +1939,7 @@ if st.session_state.current_user:
             # NEW: Add a fourth tab for multi-assigned testers
             tab1, tab2, tab3, tab4 = st.tabs(["📝 Create Task", "👥 Manage", "✅ Status", "⚠️ Multi-Assigned"])
             
-            # Tab 1: Create Task
+            # Tab 1: Create Task - UPDATED TO SHOW ALL LANGUAGES
             with tab1:
                 st.header("Create New Task")
                 
@@ -1928,7 +2009,8 @@ if st.session_state.current_user:
                                 st.write("🟢" if tester['is_available'] else "🔴")
                             
                             with col3:
-                                st.write(", ".join(tester['matching_languages']))
+                                # Show ALL languages, not just matching ones
+                                st.write(", ".join(sorted(tester['languages'])))
                             
                             with col4:
                                 if tester['assigned_tasks']:
@@ -2295,7 +2377,7 @@ if st.session_state.current_user:
 st.divider()
 col1, col2 = st.columns([3, 1])
 with col1:
-    st.caption("Team Task Assignment Tool v7.1 | GitHub Storage | Multi-User Support")
+    st.caption("Team Task Assignment Tool v7.2 | GitHub Storage | Multi-User Support")
 with col2:
     with st.expander("💡 Tips"):
         st.markdown("""
@@ -2309,4 +2391,6 @@ with col2:
         - Headers should be in first or second row
         - Tool handles various formats automatically
         - Duplicate column names are automatically numbered
+        
+        **Note:** Week periods in reports update automatically
         """)
