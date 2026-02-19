@@ -341,8 +341,6 @@ if 'show_reset_confirmation' not in st.session_state:
     st.session_state.show_reset_confirmation = False
 if 'last_uploaded_file_id' not in st.session_state:
     st.session_state.last_uploaded_file_id = None
-if 'previous_roster_size' not in st.session_state:
-    st.session_state.previous_roster_size = 0
 if 'file_upload_count' not in st.session_state:
     st.session_state.file_upload_count = 0
 
@@ -1589,7 +1587,7 @@ END OF REPORT
             </div>
         </div>
         <div class="footer">
-            <p>Task Assignment Tool v7.3 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Task Assignment Tool v7.4 | Comprehensive Analytics Report | Generated: {now.strftime('%Y-%m-%d %H:%M:%S')}</p>
         </div>
     </div>
     </body>
@@ -1727,13 +1725,6 @@ if st.session_state.current_user:
             
             if is_new_file:
                 st.session_state.last_uploaded_file_id = file_id
-                # Store previous roster size before clearing
-                if st.session_state.roster_data is not None:
-                    st.session_state.previous_roster_size = len(st.session_state.roster_data)
-                else:
-                    st.session_state.previous_roster_size = 0
-                # Clear old roster data
-                st.session_state.roster_data = None
                 st.session_state.file_upload_count += 1
                 st.info("📁 New file detected, processing...")
             
@@ -1799,20 +1790,35 @@ if st.session_state.current_user:
                     df = df[(df['first_name'].notna()) & (df['first_name'] != '') &
                            (df['last_name'].notna()) & (df['last_name'] != '')]
                     
-                    # Force update session state
-                    st.session_state.roster_data = df.copy()  # Use copy to ensure it's a new object
+                    # Get the current count BEFORE updating session state
+                    new_count = len(df)
                     
-                    st.success(f"✅ Loaded {len(df)} team members from {uploaded_file.name}")
-                    
-                    # Show what changed if it's a new file and not the first upload
-                    if is_new_file and st.session_state.file_upload_count > 1:
-                        diff = len(df) - st.session_state.previous_roster_size
+                    # Check if we have a previous roster to compare against
+                    if is_new_file and st.session_state.roster_data is not None and st.session_state.file_upload_count > 1:
+                        # Calculate diff using the current roster data before replacing it
+                        old_count = len(st.session_state.roster_data)
+                        diff = new_count - old_count
+                        
+                        # Update session state with new data
+                        st.session_state.roster_data = df.copy()
+                        
+                        # Show success message
+                        st.success(f"✅ Loaded {new_count} team members from {uploaded_file.name}")
+                        
+                        # Show diff message
                         if diff > 0:
                             st.info(f"📈 Added {diff} team members")
                         elif diff < 0:
                             st.info(f"📉 Removed {abs(diff)} team members")
                         else:
-                            st.info(f"↔️ Same number of team members ({len(df)})")
+                            st.info(f"↔️ Same number of team members ({new_count})")
+                    else:
+                        # First upload or not a new file
+                        st.session_state.roster_data = df.copy()
+                        st.success(f"✅ Loaded {new_count} team members from {uploaded_file.name}")
+                        
+                        if is_new_file and st.session_state.file_upload_count == 1:
+                            st.info(f"📊 Initial load: {new_count} team members")
                     
                     # Show validation issues if any
                     issues = validate_roster_data(df)
@@ -2440,7 +2446,7 @@ if st.session_state.current_user:
 st.divider()
 col1, col2 = st.columns([3, 1])
 with col1:
-    st.caption("Team Task Assignment Tool v7.4 | GitHub Storage | Multi-User Support")
+    st.caption("Team Task Assignment Tool v7.5 | GitHub Storage | Multi-User Support")
 with col2:
     with st.expander("💡 Tips"):
         st.markdown("""
