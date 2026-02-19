@@ -90,7 +90,6 @@
       "Berk Birol"
     ],
     "TASK_004": [
-      "Dilson Cassaro",
       "Javier G\u00f3mez",
       "Javier Ignacio Le\u00f3n",
       "Keith Kaup"
@@ -2495,10 +2494,46 @@
         "Swedish"
       ],
       "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_004",
+      "task_name": "t4t4t4",
+      "tester": "Javier G\u00f3mez",
+      "assigned_at": "2026-02-19T11:15:05.840592",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Portuguese",
+        "Spanish"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_004",
+      "task_name": "t4t4t4",
+      "tester": "Javier Ignacio Le\u00f3n",
+      "assigned_at": "2026-02-19T11:15:05.840616",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Portuguese",
+        "Spanish"
+      ],
+      "priority": "P1 - High"
+    },
+    {
+      "task_id": "TASK_004",
+      "task_name": "t4t4t4",
+      "tester": "Keith Kaup",
+      "assigned_at": "2026-02-19T11:15:05.840624",
+      "assigned_by": "John Doe",
+      "languages": [
+        "Portuguese",
+        "Spanish"
+      ],
+      "priority": "P1 - High"
     }
   ],
   "last_modified": {
     "user": "John Doe",
-    "timestamp": "2026-02-19T11:14:17.860815"
+    "timestamp": "2026-02-19T11:15:06.137111"
   }
 }
