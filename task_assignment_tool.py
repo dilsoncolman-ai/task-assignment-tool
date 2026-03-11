@@ -49,6 +49,10 @@ if 'file_upload_count' not in st.session_state:
     st.session_state.file_upload_count = 0
 if 'last_roster_count' not in st.session_state:
     st.session_state.last_roster_count = 0
+if 'recovery_mode' not in st.session_state:
+    st.session_state.recovery_mode = False
+if 'recovery_user' not in st.session_state:
+    st.session_state.recovery_user = None
 
 # Authentication Functions
 def hash_password(password):
@@ -118,7 +122,7 @@ def register_user(username, password, display_name, security_question, security_
         "password": hash_password(password),
         "display_name": display_name,
         "security_question": security_question,
-        "security_answer": hash_password(security_answer.lower()),  # Hash the answer too
+        "security_answer": hash_password(security_answer.lower().strip()),  # Hash the answer too
         "created_at": datetime.now().isoformat(),
         "data_file": f"user_{username}_data.json"
     }
@@ -147,7 +151,7 @@ def verify_security_answer(username, answer):
         return False
     
     stored_answer = users[username].get("security_answer", "")
-    return stored_answer == hash_password(answer.lower())
+    return stored_answer == hash_password(answer.lower().strip())
 
 def reset_password(username, new_password):
     """Reset user password"""
@@ -1380,47 +1384,65 @@ def show_login():
     with tab3:
         st.subheader("🔑 Password Recovery")
         
-        with st.form("password_recovery_form"):
-            recovery_username = st.text_input("Username")
+        if not st.session_state.recovery_mode:
+            # Step 1: Get username and show security question
+            recovery_username = st.text_input("Enter your username", key="recovery_username_input")
             
-            submitted = st.form_submit_button("Get Security Question", type="primary", use_container_width=True)
-            
-            if submitted and recovery_username:
-                users = get_users()
-                if recovery_username in users:
-                    user_data = users[recovery_username]
-                    security_question = user_data.get('security_question', 'No security question set')
-                    
-                    st.info(f"**Security Question**: {security_question}")
-                    
-                    # Show answer form
-                    with st.form("answer_form"):
-                        security_answer = st.text_input("Your Answer")
-                        new_password = st.text_input("New Password", type="password")
-                        confirm_password = st.text_input("Confirm New Password", type="password")
-                        
-                        reset_submitted = st.form_submit_button("Reset Password", type="primary", use_container_width=True)
-                        
-                        if reset_submitted:
-                            if security_answer and new_password and confirm_password:
-                                if verify_security_answer(recovery_username, security_answer):
-                                    if new_password != confirm_password:
-                                        st.error("Passwords don't match")
-                                    elif len(new_password) < 6:
-                                        st.error("Password must be at least 6 characters")
-                                    else:
-                                        if reset_password(recovery_username, new_password):
-                                            st.success("✅ Password reset successfully! Please login with your new password.")
-                                            time.sleep(2)
-                                            st.rerun()
-                                        else:
-                                            st.error("Failed to reset password")
-                                else:
-                                    st.error("❌ Incorrect security answer")
-                            else:
-                                st.error("Please fill all fields")
+            if st.button("Get Security Question", type="primary", use_container_width=True):
+                if recovery_username:
+                    users = get_users()
+                    if recovery_username in users:
+                        user_data = users[recovery_username]
+                        st.session_state.recovery_mode = True
+                        st.session_state.recovery_user = recovery_username
+                        st.rerun()
+                    else:
+                        st.error("Username not found")
                 else:
-                    st.error("Username not found")
+                    st.error("Please enter your username")
+        
+        else:
+            # Step 2: Show security question and reset password
+            users = get_users()
+            user_data = users[st.session_state.recovery_user]
+            security_question = user_data.get('security_question', 'No security question set')
+            
+            st.info(f"**Security Question**: {security_question}")
+            
+            security_answer = st.text_input("Your Answer", key="recovery_answer_input")
+            new_password = st.text_input("New Password", type="password", key="new_password_input")
+            confirm_password = st.text_input("Confirm New Password", type="password", key="confirm_password_input")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("Reset Password", type="primary", use_container_width=True):
+                    if security_answer and new_password and confirm_password:
+                        if verify_security_answer(st.session_state.recovery_user, security_answer):
+                            if new_password != confirm_password:
+                                st.error("Passwords don't match")
+                            elif len(new_password) < 6:
+                                st.error("Password must be at least 6 characters")
+                            else:
+                                if reset_password(st.session_state.recovery_user, new_password):
+                                    st.success("✅ Password reset successfully! Please login with your new password.")
+                                    # Clear recovery state
+                                    st.session_state.recovery_mode = False
+                                    st.session_state.recovery_user = None
+                                    time.sleep(2)
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to reset password")
+                        else:
+                            st.error("❌ Incorrect security answer")
+                    else:
+                        st.error("Please fill all fields")
+            
+            with col2:
+                if st.button("Cancel", use_container_width=True):
+                    st.session_state.recovery_mode = False
+                    st.session_state.recovery_user = None
+                    st.rerun()
 
 # Add custom JavaScript for keep-alive
 st.markdown("""
