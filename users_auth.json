@@ -32,5 +32,13 @@
     "security_answer": "0234e4d93cb1a6e9c03a45f95e93506b2cdbafe4b9ecc4deef8b27b9ae16e426",
     "created_at": "2026-03-11T11:15:47.747307",
     "data_file": "user_dilson5_data.json"
+  },
+  "dilson6": {
+    "password": "270086a16d36a1311c68b66e050022899b6fa98942866e1be616d115f6ad3e69",
+    "display_name": "d colman 6",
+    "security_question": "What was the name of your first pet?",
+    "security_answer": "0234e4d93cb1a6e9c03a45f95e93506b2cdbafe4b9ecc4deef8b27b9ae16e426",
+    "created_at": "2026-03-11T11:50:42.942213",
+    "data_file": "user_dilson6_data.json"
   }
 }
