@@ -25,6 +25,10 @@
     "TASK_001": [
       "Angela Brauer",
       "Frederik Fagerlund"
+    ],
+    "TASK_002": [
+      "Antoine Le Naour",
+      "Esther Weber"
     ]
   },
   "completed_tasks": [],
@@ -53,10 +57,32 @@
         "Chinese"
       ],
       "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "tester": "Antoine Le Naour",
+      "assigned_at": "2026-03-12T08:57:28.666630",
+      "assigned_by": "D Colman",
+      "languages": [
+        "French"
+      ],
+      "priority": "P0 - Critical"
+    },
+    {
+      "task_id": "TASK_002",
+      "task_name": "t1t1t1",
+      "tester": "Esther Weber",
+      "assigned_at": "2026-03-12T08:57:28.666671",
+      "assigned_by": "D Colman",
+      "languages": [
+        "French"
+      ],
+      "priority": "P0 - Critical"
     }
   ],
   "last_modified": {
     "user": "D Colman",
-    "timestamp": "2026-03-12T08:57:27.932899"
+    "timestamp": "2026-03-12T08:57:28.833564"
   }
 }
